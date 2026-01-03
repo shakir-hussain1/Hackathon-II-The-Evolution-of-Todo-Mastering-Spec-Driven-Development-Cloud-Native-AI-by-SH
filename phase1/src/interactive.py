@@ -1,7 +1,7 @@
 """Interactive CLI for Todo Application - Phase 1."""
 
-from src.services.task_manager import TaskManager
-from src.cli.commands import (
+from .services.task_manager import TaskManager
+from .cli.commands import (
     add_command,
     list_command,
     update_command,

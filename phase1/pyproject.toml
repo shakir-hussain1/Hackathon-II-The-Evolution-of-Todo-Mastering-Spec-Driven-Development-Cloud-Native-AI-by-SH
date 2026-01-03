@@ -12,6 +12,7 @@ dev-dependencies = [
 
 [project.scripts]
 todo = "src.main:main"
+todo-interactive = "src.interactive:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
