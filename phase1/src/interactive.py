@@ -1,14 +1,32 @@
 """Interactive CLI for Todo Application - Phase 1."""
 
-from .services.task_manager import TaskManager
-from .cli.commands import (
-    add_command,
-    list_command,
-    update_command,
-    delete_command,
-    complete_command,
-    incomplete_command,
-)
+import sys
+from pathlib import Path
+
+# Add parent directory to path to allow imports when run as script
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+
+try:
+    from src.services.task_manager import TaskManager
+    from src.cli.commands import (
+        add_command,
+        list_command,
+        update_command,
+        delete_command,
+        complete_command,
+        incomplete_command,
+    )
+except ImportError:
+    from services.task_manager import TaskManager
+    from cli.commands import (
+        add_command,
+        list_command,
+        update_command,
+        delete_command,
+        complete_command,
+        incomplete_command,
+    )
 
 
 class Args:
