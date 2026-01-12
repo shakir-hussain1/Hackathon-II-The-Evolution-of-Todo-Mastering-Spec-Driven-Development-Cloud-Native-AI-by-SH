@@ -1,0 +1,27 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: phase2-todo-db
+    plan: free
+    databaseName: todo_db
+    databaseUser: todo_user
+
+  # FastAPI Backend
+  - type: web
+    name: phase2-todo-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phase2-todo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: PORT
+        value: 10000
