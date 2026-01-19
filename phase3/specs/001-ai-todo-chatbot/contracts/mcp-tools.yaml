@@ -1,0 +1,501 @@
+mcp_version: "1.0"
+server:
+  name: "todo-mcp-server"
+  description: "MCP server exposing todo task management tools for AI agent"
+  version: "1.0.0"
+
+tools:
+  - name: "add_task"
+    description: |
+      Add a new task to the user's todo list.
+
+      Use this tool when user wants to create a new task, using phrases like:
+      - "Add [task] to my list"
+      - "Create a task for [task]"
+      - "Remind me to [task]"
+      - "I need to [task]"
+
+      The tool creates a task in pending status and returns the created task object.
+    input_schema:
+      type: "object"
+      required:
+        - user_id
+        - title
+      properties:
+        user_id:
+          type: "string"
+          format: "uuid"
+          description: "User identifier (for data isolation)"
+        title:
+          type: "string"
+          minLength: 1
+          maxLength: 500
+          description: "Task title/description"
+        description:
+          type: "string"
+          maxLength: 5000
+          description: "Optional detailed task description"
+          default: ""
+    output_schema:
+      type: "object"
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: "boolean"
+          description: "Whether task creation succeeded"
+        task:
+          type: "object"
+          description: "Created task object"
+          required:
+            - id
+            - user_id
+            - title
+            - description
+            - status
+            - created_at
+            - updated_at
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+            user_id:
+              type: "string"
+              format: "uuid"
+            title:
+              type: "string"
+            description:
+              type: "string"
+            status:
+              type: "string"
+              enum: ["pending", "completed"]
+            created_at:
+              type: "string"
+              format: "date-time"
+            updated_at:
+              type: "string"
+              format: "date-time"
+            completed_at:
+              type: "string"
+              format: "date-time"
+              nullable: true
+        message:
+          type: "string"
+          description: "Human-readable confirmation message"
+        error:
+          type: "string"
+          nullable: true
+          description: "Error message if tool execution failed"
+    examples:
+      - input:
+          user_id: "550e8400-e29b-41d4-a716-446655440000"
+          title: "buy groceries"
+          description: ""
+        output:
+          success: true
+          task:
+            id: "task-uuid-123"
+            user_id: "550e8400-e29b-41d4-a716-446655440000"
+            title: "buy groceries"
+            description: ""
+            status: "pending"
+            created_at: "2026-01-13T10:30:00Z"
+            updated_at: "2026-01-13T10:30:00Z"
+            completed_at: null
+          message: "Added task: buy groceries"
+          error: null
+
+  - name: "list_tasks"
+    description: |
+      Retrieve all tasks for a user, optionally filtered by status.
+
+      Use this tool when user wants to view their tasks, using phrases like:
+      - "Show me my tasks"
+      - "What's on my todo list?"
+      - "List all my tasks"
+      - "Show pending tasks"
+      - "Show completed tasks"
+
+      Returns array of task objects ordered by creation date (newest first).
+    input_schema:
+      type: "object"
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: "string"
+          format: "uuid"
+          description: "User identifier (for data isolation)"
+        status:
+          type: "string"
+          enum: ["pending", "completed", "all"]
+          description: "Filter tasks by status (default: all)"
+          default: "all"
+    output_schema:
+      type: "object"
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: "boolean"
+          description: "Whether retrieval succeeded"
+        data:
+          type: "array"
+          description: "Array of task objects"
+          items:
+            type: "object"
+            required:
+              - id
+              - user_id
+              - title
+              - description
+              - status
+              - created_at
+              - updated_at
+            properties:
+              id:
+                type: "string"
+                format: "uuid"
+              user_id:
+                type: "string"
+                format: "uuid"
+              title:
+                type: "string"
+              description:
+                type: "string"
+              status:
+                type: "string"
+                enum: ["pending", "completed"]
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+              completed_at:
+                type: "string"
+                format: "date-time"
+                nullable: true
+        message:
+          type: "string"
+          description: "Human-readable result message"
+        error:
+          type: "string"
+          nullable: true
+          description: "Error message if tool execution failed"
+    examples:
+      - input:
+          user_id: "550e8400-e29b-41d4-a716-446655440000"
+          status: "all"
+        output:
+          success: true
+          data:
+            - id: "task-uuid-123"
+              user_id: "550e8400-e29b-41d4-a716-446655440000"
+              title: "buy groceries"
+              description: ""
+              status: "pending"
+              created_at: "2026-01-13T10:30:00Z"
+              updated_at: "2026-01-13T10:30:00Z"
+              completed_at: null
+            - id: "task-uuid-456"
+              user_id: "550e8400-e29b-41d4-a716-446655440000"
+              title: "call John"
+              description: "Phone: 555-1234"
+              status: "pending"
+              created_at: "2026-01-13T09:15:00Z"
+              updated_at: "2026-01-13T09:15:00Z"
+              completed_at: null
+            - id: "task-uuid-789"
+              user_id: "550e8400-e29b-41d4-a716-446655440000"
+              title: "finish report"
+              description: ""
+              status: "completed"
+              created_at: "2026-01-12T14:00:00Z"
+              updated_at: "2026-01-13T08:00:00Z"
+              completed_at: "2026-01-13T08:00:00Z"
+          message: "Found 3 tasks"
+          error: null
+
+  - name: "update_task"
+    description: |
+      Update an existing task's title and/or description.
+
+      Use this tool when user wants to modify a task, using phrases like:
+      - "Change [task] to [new description]"
+      - "Update [task] with [details]"
+      - "Edit [task] to say [new text]"
+      - "Add [details] to [task]"
+
+      The tool finds the task by ID and updates specified fields. If user provides
+      ambiguous task reference (e.g., title substring), agent should use list_tasks
+      first to disambiguate, then call update_task with specific ID.
+    input_schema:
+      type: "object"
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: "string"
+          format: "uuid"
+          description: "User identifier (for data isolation)"
+        task_id:
+          type: "string"
+          format: "uuid"
+          description: "ID of task to update"
+        title:
+          type: "string"
+          minLength: 1
+          maxLength: 500
+          description: "New task title (optional)"
+        description:
+          type: "string"
+          maxLength: 5000
+          description: "New task description (optional)"
+    output_schema:
+      type: "object"
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: "boolean"
+          description: "Whether update succeeded"
+        task:
+          type: "object"
+          description: "Updated task object"
+          required:
+            - id
+            - user_id
+            - title
+            - description
+            - status
+            - created_at
+            - updated_at
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+            user_id:
+              type: "string"
+              format: "uuid"
+            title:
+              type: "string"
+            description:
+              type: "string"
+            status:
+              type: "string"
+              enum: ["pending", "completed"]
+            created_at:
+              type: "string"
+              format: "date-time"
+            updated_at:
+              type: "string"
+              format: "date-time"
+            completed_at:
+              type: "string"
+              format: "date-time"
+              nullable: true
+        message:
+          type: "string"
+          description: "Human-readable confirmation message"
+        error:
+          type: "string"
+          nullable: true
+          description: "Error message if tool execution failed"
+    examples:
+      - input:
+          user_id: "550e8400-e29b-41d4-a716-446655440000"
+          task_id: "task-uuid-123"
+          title: "buy groceries and milk"
+        output:
+          success: true
+          task:
+            id: "task-uuid-123"
+            user_id: "550e8400-e29b-41d4-a716-446655440000"
+            title: "buy groceries and milk"
+            description: ""
+            status: "pending"
+            created_at: "2026-01-13T10:30:00Z"
+            updated_at: "2026-01-13T11:00:00Z"
+            completed_at: null
+          message: "Updated task: buy groceries and milk"
+          error: null
+
+  - name: "complete_task"
+    description: |
+      Mark a task as completed.
+
+      Use this tool when user wants to complete a task, using phrases like:
+      - "Mark [task] as complete"
+      - "Complete [task]"
+      - "[task] is done"
+      - "Finish [task]"
+      - "Check off [task]"
+
+      The tool updates task status to 'completed' and sets completed_at timestamp.
+      If user provides ambiguous task reference, agent should use list_tasks first
+      to disambiguate, then call complete_task with specific ID.
+    input_schema:
+      type: "object"
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: "string"
+          format: "uuid"
+          description: "User identifier (for data isolation)"
+        task_id:
+          type: "string"
+          format: "uuid"
+          description: "ID of task to complete"
+    output_schema:
+      type: "object"
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: "boolean"
+          description: "Whether completion succeeded"
+        task:
+          type: "object"
+          description: "Completed task object"
+          required:
+            - id
+            - user_id
+            - title
+            - description
+            - status
+            - created_at
+            - updated_at
+            - completed_at
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+            user_id:
+              type: "string"
+              format: "uuid"
+            title:
+              type: "string"
+            description:
+              type: "string"
+            status:
+              type: "string"
+              enum: ["completed"]
+            created_at:
+              type: "string"
+              format: "date-time"
+            updated_at:
+              type: "string"
+              format: "date-time"
+            completed_at:
+              type: "string"
+              format: "date-time"
+        message:
+          type: "string"
+          description: "Human-readable confirmation message"
+        error:
+          type: "string"
+          nullable: true
+          description: "Error message if tool execution failed"
+    examples:
+      - input:
+          user_id: "550e8400-e29b-41d4-a716-446655440000"
+          task_id: "task-uuid-123"
+        output:
+          success: true
+          task:
+            id: "task-uuid-123"
+            user_id: "550e8400-e29b-41d4-a716-446655440000"
+            title: "buy groceries"
+            description: ""
+            status: "completed"
+            created_at: "2026-01-13T10:30:00Z"
+            updated_at: "2026-01-13T12:00:00Z"
+            completed_at: "2026-01-13T12:00:00Z"
+          message: "Completed task: buy groceries"
+          error: null
+
+  - name: "delete_task"
+    description: |
+      Delete a task from the user's todo list.
+
+      Use this tool when user wants to remove a task, using phrases like:
+      - "Delete [task]"
+      - "Remove [task]"
+      - "Get rid of [task]"
+      - "Delete all completed tasks"
+
+      The tool permanently removes the task from database. For destructive actions
+      affecting multiple tasks (e.g., "delete all completed"), agent SHOULD request
+      confirmation first by asking user "Are you sure?". After user confirms, proceed
+      with deletion.
+
+      If user provides ambiguous task reference, agent should use list_tasks first
+      to disambiguate, then call delete_task with specific ID(s).
+    input_schema:
+      type: "object"
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: "string"
+          format: "uuid"
+          description: "User identifier (for data isolation)"
+        task_id:
+          type: "string"
+          format: "uuid"
+          description: "ID of task to delete"
+    output_schema:
+      type: "object"
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: "boolean"
+          description: "Whether deletion succeeded"
+        message:
+          type: "string"
+          description: "Human-readable confirmation message"
+        error:
+          type: "string"
+          nullable: true
+          description: "Error message if tool execution failed"
+    examples:
+      - input:
+          user_id: "550e8400-e29b-41d4-a716-446655440000"
+          task_id: "task-uuid-123"
+        output:
+          success: true
+          message: "Deleted task: buy groceries"
+          error: null
+
+implementation_notes:
+  security:
+    - All tools MUST validate user_id parameter
+    - All database queries MUST filter by user_id (prevent cross-user access)
+    - Never trust task_id without user_id verification (e.g., ensure task belongs to user)
+
+  error_handling:
+    - Task not found → return {success: false, error: "Task not found", message: "I couldn't find that task."}
+    - Validation error → return {success: false, error: "Validation failed", message: "..."}
+    - Database error → return {success: false, error: "Database error", message: "An error occurred. Please try again."}
+    - Never expose technical stack traces in error messages
+
+  performance:
+    - list_tasks: Limit results to 1000 tasks max (paginate if needed in future)
+    - Database queries: Use indexes on user_id for fast lookups (<100ms)
+    - Connection pooling: Reuse database connections across tool calls
+
+  auditing:
+    - All tool calls logged with user_id, tool name, args, result, timestamp
+    - Stored in messages.tool_calls JSONB field for audit trail
+    - Enable debugging: "Which tool was called?", "What args were passed?"

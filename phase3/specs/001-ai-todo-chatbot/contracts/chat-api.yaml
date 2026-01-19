@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: AI-Powered Todo Chatbot API
+  description: |
+    RESTful API for conversational todo task management using AI agent with MCP tools.
+
+    **Key Features**:
+    - Natural language task operations (add, view, update, complete, delete)
+    - Stateless backend with conversation persistence
+    - JWT-based authentication and user isolation
+    - OpenAI Agent with MCP tool orchestration
+
+    **Architecture**:
+    - Single endpoint: POST /api/{user_id}/chat
+    - Conversation context reconstructed from database on each request
+    - All task operations via MCP tools (no direct database access by agent)
+  version: 1.0.0
+  contact:
+    name: Phase III Team
+    email: phase3@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.phase3.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send chat message to AI agent
+      description: |
+        Send a natural language message to the AI todo chatbot. The agent processes
+        the message, invokes necessary MCP tools, and returns a response. Conversation
+        context is automatically managed (loaded from and saved to database).
+
+        **Authentication**: Requires valid JWT token in Authorization header.
+        **User Isolation**: user_id in path must match user_id in JWT token.
+
+        **Example Use Cases**:
+        - "Add buy groceries to my list"
+        - "Show me all my tasks"
+        - "Mark buy groceries as complete"
+        - "Update call John task to include phone number"
+        - "Delete the buy milk task"
+      operationId: sendChatMessage
+      tags:
+        - Chat
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User identifier (must match JWT token)
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              add_task:
+                summary: Add a task
+                value:
+                  message: "Add buy groceries to my todo list"
+              list_tasks:
+                summary: List all tasks
+                value:
+                  message: "What's on my todo list?"
+              complete_task:
+                summary: Complete a task
+                value:
+                  message: "Mark buy groceries as done"
+              update_task:
+                summary: Update a task
+                value:
+                  message: "Change the buy groceries task to buy groceries and milk"
+              delete_task:
+                summary: Delete a task
+                value:
+                  message: "Delete the buy milk task"
+      responses:
+        '200':
+          description: Agent response with optional tool execution results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                task_added:
+                  summary: Task successfully added
+                  value:
+                    message: "I've added 'buy groceries' to your task list."
+                    tool_calls:
+                      - tool: "add_task"
+                        args:
+                          user_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "buy groceries"
+                          description: ""
+                        result:
+                          success: true
+                          task:
+                            id: "task-uuid-123"
+                            title: "buy groceries"
+                            description: ""
+                            status: "pending"
+                            created_at: "2026-01-13T10:30:00Z"
+                          message: "Added task: buy groceries"
+                tasks_listed:
+                  summary: Tasks listed
+                  value:
+                    message: "Here are your tasks:\n1. buy groceries (pending)\n2. call John (pending)\n3. finish report (completed)"
+                    tool_calls:
+                      - tool: "list_tasks"
+                        args:
+                          user_id: "550e8400-e29b-41d4-a716-446655440000"
+                        result:
+                          success: true
+                          data:
+                            - id: "task-uuid-123"
+                              title: "buy groceries"
+                              status: "pending"
+                            - id: "task-uuid-456"
+                              title: "call John"
+                              status: "pending"
+                            - id: "task-uuid-789"
+                              title: "finish report"
+                              status: "completed"
+                clarification_needed:
+                  summary: Agent requests clarification
+                  value:
+                    message: "I found multiple tasks with 'buy' in the title. Which one did you mean?\n1. buy groceries\n2. buy milk\n3. buy eggs"
+                    tool_calls: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from Better Auth authentication.
+
+        Token payload must include:
+        - sub: user_id (UUID)
+        - email: user email
+        - iat: issued at timestamp
+        - exp: expiration timestamp
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: User's natural language input
+          minLength: 1
+          maxLength: 10000
+          example: "Add buy groceries to my todo list"
+        conversation_id:
+          type: string
+          format: uuid
+          description: |
+            Optional conversation ID to continue specific conversation.
+            If omitted, system uses user's most recent conversation or creates new one.
+          example: "conversation-uuid-123"
+      additionalProperties: false
+
+    ChatResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Agent's natural language response
+          example: "I've added 'buy groceries' to your task list."
+        tool_calls:
+          type: array
+          description: List of MCP tools invoked by agent (for auditing/debugging)
+          items:
+            $ref: '#/components/schemas/ToolCallRecord'
+        conversation_id:
+          type: string
+          format: uuid
+          description: ID of the conversation this message belongs to
+          example: "conversation-uuid-123"
+        message_id:
+          type: string
+          format: uuid
+          description: ID of the assistant message created
+          example: "message-uuid-456"
+      additionalProperties: false
+
+    ToolCallRecord:
+      type: object
+      required:
+        - tool
+        - args
+        - result
+      properties:
+        tool:
+          type: string
+          description: Name of MCP tool invoked
+          enum:
+            - add_task
+            - list_tasks
+            - update_task
+            - complete_task
+            - delete_task
+          example: "add_task"
+        args:
+          type: object
+          description: Arguments passed to MCP tool
+          example:
+            user_id: "550e8400-e29b-41d4-a716-446655440000"
+            title: "buy groceries"
+            description: ""
+        result:
+          type: object
+          description: Result returned by MCP tool
+          required:
+            - success
+            - message
+          properties:
+            success:
+              type: boolean
+              description: Whether tool execution succeeded
+            data:
+              description: Tool-specific result data (task object, task array, etc.)
+            message:
+              type: string
+              description: Human-readable message about tool execution
+            error:
+              type: string
+              nullable: true
+              description: Error message if tool execution failed
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code or type
+          example: "AUTHENTICATION_FAILED"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid or expired JWT token"
+        details:
+          type: object
+          description: Additional error details (optional)
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Authentication failed - invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "AUTHENTICATION_FAILED"
+            message: "Invalid or expired JWT token. Please log in again."
+
+    Forbidden:
+      description: Authorization failed - user_id mismatch or insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "USER_ID_MISMATCH"
+            message: "The user_id in the URL does not match the authenticated user. Access denied."
+
+    ValidationError:
+      description: Request validation failed - invalid input format
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "VALIDATION_ERROR"
+            message: "Invalid request format"
+            details:
+              field: "message"
+              issue: "Message cannot be empty"
+
+    InternalServerError:
+      description: Server error - unexpected failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "INTERNAL_SERVER_ERROR"
+            message: "An unexpected error occurred. Please try again later."
+
+tags:
+  - name: Chat
+    description: Conversational AI chat interface for todo task management

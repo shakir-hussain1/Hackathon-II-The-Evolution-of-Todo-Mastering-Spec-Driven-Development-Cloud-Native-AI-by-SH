@@ -1,0 +1,35 @@
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# OpenAI Agents SDK
+openai==1.54.3
+
+# MCP SDK (Model Context Protocol)
+mcp>=1.0.0
+
+# Database
+sqlmodel==0.0.14
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# Environment variables
+python-dotenv==1.0.0
+
+# CORS
+fastapi-cors==0.0.6
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Code quality
+black==23.12.1
+flake8==6.1.0
