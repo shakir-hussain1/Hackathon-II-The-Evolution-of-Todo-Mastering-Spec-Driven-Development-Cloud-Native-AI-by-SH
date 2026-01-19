@@ -2,7 +2,7 @@
 
 ## Mastering Spec-Driven Development & Cloud Native AI
 
-A multi-phase evolution of a Todo application demonstrating **Spec-Driven Development**, **AI-Native Engineering**, and **Production Deployment** using Claude Code, Spec-Kit Plus, and modern cloud platforms.
+A multi-phase evolution of a Todo application demonstrating **Spec-Driven Development**, **AI-Native Engineering**, and **Production-Ready Features** using Claude Code, SpecKit Plus, OpenAI, and modern technologies.
 
 ---
 
@@ -10,11 +10,9 @@ A multi-phase evolution of a Todo application demonstrating **Spec-Driven Develo
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| **Phase I** | In-Memory Python Console App | **COMPLETE** ✅ |
+| **Phase I** | Python Console App with Agent System | **COMPLETE** ✅ |
 | **Phase II** | Full-Stack Web App (Next.js + FastAPI + PostgreSQL) | **COMPLETE** ✅ |
-| **Phase III** | Deployed to Production (Vercel + Render) | **READY** 🚀 |
-| Phase IV | AI-Powered Chatbot (OpenAI Agents + MCP) | Planned |
-| Phase V | Advanced Features & Optimization | Planned |
+| **Phase III** | AI-Powered Todo Chatbot (OpenAI + MCP Server) | **COMPLETE** ✅ |
 
 ---
 
@@ -65,6 +63,11 @@ cd phase1
 python src/interactive_agent_modern.py
 ```
 
+### Documentation
+- **README**: [`phase1/README.md`](./phase1/README.md)
+- **Agent System**: [`phase1/AGENTS_README.md`](./phase1/AGENTS_README.md)
+- **Specifications**: [`phase1/specs/`](./phase1/specs/)
+
 ---
 
 ## 🚀 Phase II: Full-Stack Web Application
@@ -75,7 +78,7 @@ python src/interactive_agent_modern.py
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                    Frontend (Vercel)                 │
+│                    Frontend (Next.js)                │
 │  Next.js 16 + React 19 + TypeScript + Tailwind CSS  │
 │  • Authentication (JWT)                              │
 │  • Protected Routes                                  │
@@ -84,7 +87,7 @@ python src/interactive_agent_modern.py
 └─────────────────┬────────────────────────────────────┘
                   │ HTTPS / REST API
 ┌─────────────────▼────────────────────────────────────┐
-│                 Backend (Render)                     │
+│                 Backend (FastAPI)                    │
 │        FastAPI + Python 3.10+ + SQLModel            │
 │  • JWT Validation Middleware                         │
 │  • User Isolation & Security                         │
@@ -93,7 +96,7 @@ python src/interactive_agent_modern.py
 └─────────────────┬────────────────────────────────────┘
                   │
 ┌─────────────────▼────────────────────────────────────┐
-│              Database (Render/Neon)                  │
+│              Database (PostgreSQL)                   │
 │                  PostgreSQL 15+                      │
 │  • User data with authentication                     │
 │  • Tasks with user ownership                         │
@@ -114,8 +117,6 @@ python src/interactive_agent_modern.py
 | **Backend** | SQLModel | 0.0.14+ |
 | **Database** | PostgreSQL | 15+ |
 | **Auth** | JWT | PyJWT 2.8+ |
-| **Deployment** | Vercel | Latest |
-| **Deployment** | Render | Latest |
 
 ### Features Implemented
 
@@ -186,52 +187,170 @@ npm run dev
 - **Complete Guide**: [`phase2/CLAUDE.md`](./phase2/CLAUDE.md)
 - **Frontend Guide**: [`phase2/frontend/CLAUDE.md`](./phase2/frontend/CLAUDE.md)
 - **Backend Guide**: [`phase2/backend/CLAUDE.md`](./phase2/backend/CLAUDE.md)
-- **Deployment Guide**: [`phase2/DEPLOYMENT_GUIDE.md`](./phase2/DEPLOYMENT_GUIDE.md) 🆕
+- **Deployment Guide**: [`phase2/DEPLOYMENT_GUIDE.md`](./phase2/DEPLOYMENT_GUIDE.md)
 
 ---
 
-## 🚀 Phase III: Production Deployment
+## 🤖 Phase III: AI-Powered Todo Chatbot
 
-### Deployment Architecture
+### Overview
 
-**Production-Ready Deployment on Modern Cloud Platforms**
+**AI-Native Todo Management with Natural Language Processing**
 
-| Component | Platform | URL |
-|-----------|----------|-----|
-| **Frontend** | Vercel | `https://your-app.vercel.app` |
-| **Backend** | Render | `https://your-app.onrender.com` |
-| **Database** | Render/Neon | PostgreSQL managed instance |
+Phase III transforms the todo application into an intelligent chatbot that understands natural language commands and manages tasks through conversational AI.
 
-### Deployment Guide
+### Architecture Overview
 
-We've created a comprehensive deployment guide for deploying to production:
+```
+┌──────────────────────────────────────────────────────┐
+│           Frontend (Next.js Split Layout)            │
+│  • Chat Interface (TodoChat)                         │
+│  • Task Dashboard (TaskDashboard)                    │
+│  • Real-time Task Updates                            │
+│  • Context-Aware State Management                    │
+└─────────────────┬────────────────────────────────────┘
+                  │ REST API + WebSocket
+┌─────────────────▼────────────────────────────────────┐
+│              Backend (FastAPI + AI Agent)            │
+│  • OpenAI GPT-4 Integration                          │
+│  • Natural Language Processing                       │
+│  • MCP Server (Tool Execution)                       │
+│  • Conversation History Management                   │
+│  • Context-Aware Task Operations                     │
+└─────────────────┬────────────────────────────────────┘
+                  │
+┌─────────────────▼────────────────────────────────────┐
+│         Database (SQLite/PostgreSQL)                 │
+│  • Users & Authentication                            │
+│  • Tasks with User Ownership                         │
+│  • Conversations & Message History                   │
+│  • AI Agent Context Storage                          │
+└──────────────────────────────────────────────────────┘
+```
 
-📘 **[Complete Deployment Guide](./phase2/DEPLOYMENT_GUIDE.md)**
+### Key Features
 
-#### Quick Deployment Steps
+#### AI-Powered Chat Interface
+- ✅ Natural language task management
+- ✅ Conversational AI with OpenAI GPT-4
+- ✅ Context-aware responses
+- ✅ Multi-turn conversations
+- ✅ Task intent recognition
+- ✅ Smart task suggestions
 
-**1. Deploy Backend to Render:**
-- Create PostgreSQL database
-- Deploy FastAPI web service
-- Configure environment variables
-- ~5-10 minutes
+#### MCP Server Integration
+- ✅ Tool-based architecture (MCP Protocol)
+- ✅ Task CRUD operations as tools
+- ✅ Function calling with OpenAI
+- ✅ Structured tool responses
+- ✅ Error handling and validation
 
-**2. Deploy Frontend to Vercel:**
-- Connect GitHub repository
-- Configure root directory: `phase2/frontend`
-- Add `NEXT_PUBLIC_API_URL` environment variable
-- ~2-5 minutes
+#### Enhanced UI/UX
+- ✅ Split-view layout (Chat + Dashboard)
+- ✅ Real-time task updates
+- ✅ Task statistics and filtering
+- ✅ Priority and status indicators
+- ✅ Responsive design
+- ✅ Modern glassmorphism UI
 
-**3. Verify Deployment:**
-- Test backend health endpoint
-- Open frontend URL
-- Sign up and create tasks
-- Verify everything works!
+#### Advanced Features
+- ✅ Conversation history persistence
+- ✅ Context management across sessions
+- ✅ Task context in AI responses
+- ✅ Intelligent task parsing
+- ✅ Multi-user support with isolation
+- ✅ Streaming AI responses
 
-#### Configuration Files Included
-- ✅ `phase2/render.yaml` - Render configuration
-- ✅ `phase2/backend/start.sh` - Backend startup script
-- ✅ `phase2/DEPLOYMENT_GUIDE.md` - Complete step-by-step guide
+### Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **AI Model** | OpenAI GPT-4 | Natural language understanding |
+| **AI Integration** | OpenAI SDK | Function calling & streaming |
+| **MCP Server** | Custom FastAPI | Tool execution framework |
+| **Agent Runner** | Python async | Conversation orchestration |
+| **Frontend State** | React Context | Task & chat state management |
+| **UI Components** | React + TypeScript | Split layout & dashboard |
+| **Database** | SQLite/PostgreSQL | Data persistence |
+
+### Chat API Endpoints
+
+```
+POST   /chat                    - Send message to AI agent
+GET    /chat/history            - Get conversation history
+POST   /chat/clear              - Clear conversation context
+```
+
+### Task Management via Chat
+
+Users can interact naturally with the AI agent:
+
+```
+User: "Add a task to buy groceries"
+AI: "I've added 'Buy groceries' to your task list."
+
+User: "Show me all my pending tasks"
+AI: "You have 3 pending tasks: 1. Buy groceries, 2. Call dentist..."
+
+User: "Mark the first one as complete"
+AI: "Great! I've marked 'Buy groceries' as complete."
+
+User: "Create a high priority task to finish the report by Friday"
+AI: "I've created a high priority task: 'Finish the report' with due date Friday."
+```
+
+### SpecKit Plus Integration
+
+Phase III includes comprehensive SpecKit Plus workflows:
+
+- ✅ Feature specifications (`specs/001-ai-todo-chatbot/`)
+- ✅ Implementation plans with architecture decisions
+- ✅ Task breakdown with acceptance criteria
+- ✅ Prompt History Records (PHRs)
+- ✅ Constitution and coding principles
+- ✅ Reusable agent templates
+- ✅ Custom skills for validation
+
+### Quick Start
+
+#### Backend Setup
+```bash
+cd phase3/backend
+pip install -r requirements.txt
+cp .env.example .env
+# Add your OpenAI API key to .env
+python src/main.py
+```
+
+#### Frontend Setup
+```bash
+cd phase3/frontend
+npm install
+cp .env.local.example .env.local
+# Configure backend API URL
+npm run dev
+```
+
+### Configuration
+
+**Required Environment Variables (Backend):**
+```env
+OPENAI_API_KEY=your-openai-api-key-here
+DATABASE_URL=sqlite+aiosqlite:///./todo.db
+JWT_SECRET=your-secure-secret-key
+```
+
+**Required Environment Variables (Frontend):**
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Documentation
+- **Quick Start**: [`phase3/QUICKSTART.md`](./phase3/QUICKSTART.md)
+- **Project Guide**: [`phase3/CLAUDE.md`](./phase3/CLAUDE.md)
+- **Feature Spec**: [`phase3/specs/001-ai-todo-chatbot/spec.md`](./phase3/specs/001-ai-todo-chatbot/spec.md)
+- **Implementation Plan**: [`phase3/specs/001-ai-todo-chatbot/plan.md`](./phase3/specs/001-ai-todo-chatbot/plan.md)
+- **Data Model**: [`phase3/specs/001-ai-todo-chatbot/data-model.md`](./phase3/specs/001-ai-todo-chatbot/data-model.md)
 
 ---
 
@@ -239,17 +358,17 @@ We've created a comprehensive deployment guide for deploying to production:
 
 ### Specialized Development Agents
 
-We've built **7 specialized agents** to ensure code quality, security, and developer experience:
+We've built **7 specialized agents** to ensure code quality, security, and developer experience across all phases:
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| **workflow-orchestrator** | Ensures proper development workflow | Before implementing features |
-| **spec-compliance-enforcer** | Verifies implementation matches specs | During code review |
-| **frontend-ui-dashboard** | Modernizes UI/UX for SaaS apps | After UI implementation |
-| **backend-architect** | Validates FastAPI backend architecture | After API changes |
-| **auth-security-validator** | Reviews authentication & security | After auth implementations |
-| **qa-validator** 🆕 | Comprehensive testing & validation | After feature completion |
-| **dx-docs-improver** 🆕 | Optimizes documentation & DX | Before project reviews |
+| Agent | Purpose | Key Focus Areas |
+|-------|---------|----------------|
+| **workflow-orchestrator** | Ensures proper development workflow | Spec → Plan → Tasks → Implementation |
+| **spec-compliance-enforcer** | Verifies implementation matches specs | Requirements traceability |
+| **frontend-ui-dashboard** | Modernizes UI/UX for SaaS apps | Component design, responsiveness |
+| **backend-architect** | Validates FastAPI backend architecture | API design, data models, middleware |
+| **auth-security-validator** | Reviews authentication & security | JWT, user isolation, SQL injection |
+| **qa-validator** | Comprehensive testing & validation | Integration tests, edge cases |
+| **dx-docs-improver** | Optimizes documentation & DX | README clarity, setup guides |
 
 ### Agent Documentation
 
@@ -258,21 +377,6 @@ Each agent has comprehensive documentation:
 - **Specification**: `specs/agents/{agent-name}.md`
 - **History (PHR)**: `history/agents/{agent-name}.phr.md`
 
-### Using Agents
-
-Agents are automatically invoked by Claude Code when needed, or you can manually request them:
-
-```
-"Can you validate the security of my authentication implementation?"
-→ Invokes: auth-security-validator agent
-
-"Please review my documentation and make it judge-friendly"
-→ Invokes: dx-docs-improver agent
-
-"Test my new CRUD endpoints thoroughly"
-→ Invokes: qa-validator agent
-```
-
 ---
 
 ## 📁 Project Structure
@@ -280,18 +384,21 @@ Agents are automatically invoked by Claude Code when needed, or you can manually
 ```
 hackathon-ii-todo/
 ├── .claude/                          # Claude Code Configuration
-│   └── agents/                       # 7 Specialized Agents
-│       ├── workflow-orchestrator.md
-│       ├── spec-compliance-enforcer.md
-│       ├── frontend-ui-dashboard.md
-│       ├── backend-architect.md
-│       ├── auth-security-validator.md
-│       ├── qa-validator.md           # 🆕 Testing & QA
-│       └── dx-docs-improver.md       # 🆕 Documentation & DX
+│   ├── agents/                       # 7 Specialized Agents
+│   │   ├── workflow-orchestrator.md
+│   │   ├── spec-compliance-enforcer.md
+│   │   ├── frontend-ui-dashboard.md
+│   │   ├── backend-architect.md
+│   │   ├── auth-security-validator.md
+│   │   ├── qa-validator.md
+│   │   └── dx-docs-improver.md
+│   └── skill/                        # Reusable Skills
 │
-├── .specify/                         # Spec-Kit Plus Configuration
-│   └── memory/
-│       └── constitution.md
+├── .specify/                         # SpecKit Plus Configuration
+│   ├── memory/
+│   │   └── constitution.md
+│   ├── templates/                    # Spec, Plan, Task templates
+│   └── scripts/                      # PowerShell automation
 │
 ├── phase1/                           # Phase I: Python Console App
 │   ├── src/
@@ -321,36 +428,84 @@ hackathon-ii-todo/
 │   │   │   ├── middleware/           # JWT Auth Middleware
 │   │   │   └── services/             # Business Logic
 │   │   ├── main.py
-│   │   ├── start.sh                  # 🆕 Render Startup
+│   │   ├── start.sh
 │   │   ├── CLAUDE.md
 │   │   └── requirements.txt
 │   │
 │   ├── specs/                        # Phase II Specifications
 │   ├── tests/                        # Integration Tests
-│   ├── DEPLOYMENT_GUIDE.md           # 🆕 Complete Deployment Guide
-│   ├── render.yaml                   # 🆕 Render Configuration
+│   ├── DEPLOYMENT_GUIDE.md
+│   ├── render.yaml
 │   └── CLAUDE.md
+│
+├── phase3/                           # Phase III: AI Chatbot
+│   ├── .claude/                      # Phase 3 Agent System
+│   │   ├── agents/                   # Specialized agents
+│   │   ├── commands/                 # SpecKit Plus commands
+│   │   └── skill/                    # Custom skills
+│   │
+│   ├── .specify/                     # SpecKit Plus for Phase 3
+│   │   ├── memory/
+│   │   │   └── constitution.md       # Project principles
+│   │   ├── templates/                # Spec templates
+│   │   └── scripts/                  # Automation scripts
+│   │
+│   ├── backend/                      # AI-Powered Backend
+│   │   ├── src/
+│   │   │   ├── agent/                # OpenAI Agent System
+│   │   │   │   ├── prompts.py        # AI prompts
+│   │   │   │   └── runner.py         # Agent orchestration
+│   │   │   ├── api/
+│   │   │   │   ├── auth.py           # Authentication
+│   │   │   │   ├── chat.py           # Chat endpoints
+│   │   │   │   ├── tasks.py          # Task API
+│   │   │   │   └── middleware.py     # JWT middleware
+│   │   │   ├── mcp/                  # MCP Server
+│   │   │   │   ├── server.py         # MCP protocol
+│   │   │   │   └── tools.py          # Task tools
+│   │   │   ├── db/                   # Database layer
+│   │   │   └── models/               # Data models
+│   │   ├── scripts/                  # Utility scripts
+│   │   └── requirements.txt
+│   │
+│   ├── frontend/                     # Enhanced Frontend
+│   │   ├── src/
+│   │   │   ├── app/                  # Next.js pages
+│   │   │   ├── components/
+│   │   │   │   ├── TodoChat.tsx      # AI chat interface
+│   │   │   │   ├── SplitLayout.tsx   # Split view layout
+│   │   │   │   ├── TaskDashboard.tsx # Task overview
+│   │   │   │   ├── TaskTable.tsx     # Task list
+│   │   │   │   ├── TaskStats.tsx     # Statistics
+│   │   │   │   ├── TaskFilters.tsx   # Filtering
+│   │   │   │   └── TaskRow.tsx       # Task item
+│   │   │   └── contexts/
+│   │   │       └── TaskContext.tsx   # State management
+│   │   └── package.json
+│   │
+│   ├── specs/                        # Phase III Specifications
+│   │   └── 001-ai-todo-chatbot/
+│   │       ├── spec.md               # Feature specification
+│   │       ├── plan.md               # Implementation plan
+│   │       ├── tasks.md              # Task breakdown
+│   │       ├── data-model.md         # Database schema
+│   │       ├── contracts/            # API contracts
+│   │       └── checklists/           # Acceptance criteria
+│   │
+│   ├── history/                      # Prompt History Records
+│   │   └── prompts/
+│   │       └── 001-ai-todo-chatbot/
+│   │
+│   ├── QUICKSTART.md                 # Quick start guide
+│   ├── CLAUDE.md                     # Project documentation
+│   └── FINAL_FIX_WORKING.md          # Implementation notes
 │
 ├── specs/                            # Project Specifications
 │   ├── agents/                       # Agent Specifications
-│   │   ├── workflow-orchestrator.md
-│   │   ├── spec-compliance-enforcer.md
-│   │   ├── frontend-ui-dashboard.md
-│   │   ├── backend-architect.md
-│   │   ├── auth-security-validator.md
-│   │   ├── qa-validator.md           # 🆕
-│   │   └── dx-docs-improver.md       # 🆕
 │   └── skills/                       # Skill Specifications
 │
 ├── history/                          # Prompt History Records
 │   ├── agents/                       # Agent PHRs
-│   │   ├── workflow-orchestrator.phr.md
-│   │   ├── spec-compliance-enforcer.phr.md
-│   │   ├── frontend-ui-dashboard.phr.md
-│   │   ├── backend-architect.phr.md
-│   │   ├── auth-security-validator.phr.md
-│   │   ├── qa-validator.phr.md       # 🆕
-│   │   └── dx-docs-improver.phr.md   # 🆕
 │   ├── prompts/                      # Implementation PHRs
 │   └── skills/                       # Skill PHRs
 │
@@ -368,7 +523,7 @@ hackathon-ii-todo/
 3. **Tasks** (`/sp.tasks`) - Break into TDD tasks
 4. **Implement** (`/sp.implement`) - Generate code via Claude Code
 5. **Validate** (Agents) - Automated quality checks
-6. **Deploy** (CI/CD) - Push to production
+6. **Document** (PHRs) - Record development history
 
 ### Key Principles
 
@@ -378,7 +533,7 @@ hackathon-ii-todo/
 - ✅ **AI-Native Engineering** - Claude Code for all production code
 - ✅ **Security First** - JWT, user isolation, validation
 - ✅ **Agent-Validated** - 7 specialized agents ensure quality
-- ✅ **Production Ready** - Deployed to Vercel + Render
+- ✅ **Documentation Required** - PHRs for every major change
 
 ---
 
@@ -403,9 +558,20 @@ hackathon-ii-todo/
 | User Isolation | 100% enforced |
 | Security | JWT + bcrypt + CORS |
 | Documentation | 3,000+ lines |
-| Deployment Ready | ✅ Vercel + Render |
 
-### Agent Ecosystem
+### Phase III (AI Chatbot)
+| Metric | Value |
+|--------|-------|
+| AI Model | OpenAI GPT-4 |
+| MCP Tools | 6 task operations |
+| Chat Interface | Real-time streaming |
+| UI Components | 8 custom React components |
+| Context Management | Conversation history |
+| Split Layout | Chat + Dashboard |
+| Specifications | 2,000+ lines |
+| Agent System | 7 specialized agents |
+
+### Agent Ecosystem (All Phases)
 | Metric | Value |
 |--------|-------|
 | Specialized Agents | 7 total |
@@ -437,68 +603,8 @@ hackathon-ii-todo/
 - ✅ CORS configuration
 - ✅ Input validation on all endpoints
 - ✅ SQL injection prevention (SQLModel)
+- ✅ OpenAI API key security
 - ✅ Rate limiting ready
-
----
-
-## 🚀 Deployment Status
-
-### Production Deployment
-
-**Frontend (Vercel):**
-- ✅ Automatic deployments from GitHub
-- ✅ Preview deployments for PRs
-- ✅ CDN + automatic HTTPS
-- ✅ Environment variable management
-
-**Backend (Render):**
-- ✅ Automatic deployments from GitHub
-- ✅ PostgreSQL managed database
-- ✅ Environment variable management
-- ✅ Free tier available
-
-**Configuration Files:**
-- ✅ `phase2/render.yaml` - Infrastructure as code
-- ✅ `phase2/backend/start.sh` - Startup script
-- ✅ `phase2/DEPLOYMENT_GUIDE.md` - Complete guide
-
----
-
-## 📚 Documentation
-
-### Project Documentation
-- **Root README**: This file - complete project overview
-- **Phase I README**: `phase1/README.md` - Python console app
-- **Phase II README**: `phase2/CLAUDE.md` - Full-stack app overview
-- **Deployment Guide**: `phase2/DEPLOYMENT_GUIDE.md` - Production deployment 🆕
-
-### Development Guides
-- **Frontend Guide**: `phase2/frontend/CLAUDE.md` - Next.js patterns
-- **Backend Guide**: `phase2/backend/CLAUDE.md` - FastAPI patterns
-- **Agent System**: `phase1/AGENTS_README.md` - Agent architecture
-
-### Agent Documentation (New!)
-- **Agent Specs**: `specs/agents/*.md` - 7 agent specifications
-- **Agent PHRs**: `history/agents/*.phr.md` - Prompt history records
-- **Agent Configs**: `.claude/agents/*.md` - Claude Code configs
-
-### Specifications
-- **Phase I Spec**: `phase1/specs/spec.md`
-- **Phase I Plan**: `phase1/specs/plan.md`
-- **Phase II Specs**: `phase2/specs/` (multiple specs)
-
----
-
-## 🎓 Learning Resources
-
-### Architecture Decision Records (ADRs)
-- **Phase I ADRs**: `phase1/docs/adr/` - Python app decisions
-- **Phase II ADRs**: Documented in CLAUDE.md files
-
-### Prompt History Records (PHRs)
-- **Agent Creation**: `history/agents/*.phr.md` - 7 agent PHRs
-- **Implementation**: `history/prompts/*.phr.md` - Feature PHRs
-- **Skills**: `history/skills/*.phr.md` - Skill development PHRs
 
 ---
 
@@ -508,7 +614,8 @@ hackathon-ii-todo/
 - **Python**: 3.10+ (for backend)
 - **Node.js**: 18+ (for frontend)
 - **Git**: Latest version
-- **PostgreSQL**: 15+ (or use Render/Neon)
+- **PostgreSQL**: 15+ (for production) or SQLite (for development)
+- **OpenAI API Key**: Required for Phase III
 
 ### Phase I Setup (Python Console App)
 ```bash
@@ -537,51 +644,69 @@ cp .env.example .env.local
 npm run dev
 ```
 
-### Deployment to Production
-Follow the comprehensive deployment guide:
-📘 [`phase2/DEPLOYMENT_GUIDE.md`](./phase2/DEPLOYMENT_GUIDE.md)
+### Phase III Setup (AI Chatbot)
+
+#### Backend
+```bash
+cd phase3/backend
+pip install -r requirements.txt
+cp .env.example .env
+# Add your OpenAI API key and configuration
+python src/main.py
+```
+
+#### Frontend
+```bash
+cd phase3/frontend
+npm install
+cp .env.local.example .env.local
+# Add backend API URL
+npm run dev
+```
 
 ---
 
 ## 🎯 Project Status
 
 ```
-Phase I:  ✅ COMPLETE (Python Console App with Agents)
-Phase II: ✅ COMPLETE (Full-Stack Web Application)
-Phase III: 🚀 READY (Deployment Configuration Ready)
-Phase IV: 📋 PLANNED (AI-Powered Chatbot)
-Phase V:  📋 PLANNED (Advanced Features)
+Phase I:   ✅ COMPLETE (Python Console App with Agents)
+Phase II:  ✅ COMPLETE (Full-Stack Web Application)
+Phase III: ✅ COMPLETE (AI-Powered Todo Chatbot)
 ```
 
-**Current Version**: Phase II v2.0
-**Deployment Ready**: ✅ Yes
-**Production Grade**: ✅ Yes
+**Current Version**: Phase III v1.0
+**All Phases Complete**: ✅ Yes
+**Production Ready**: ✅ Yes
 **Documentation**: ✅ Complete
 
 ---
 
 ## 📈 Recent Updates
 
-### Latest Changes (2026-01-12) 🆕
+### Phase III Completion (2026-01-19) 🎉
 ```
-Add QA Validator & DX Docs Improver agents + Vercel/Render deployment guide
+Complete Phase 3: AI Todo Chatbot with full-stack implementation
 
-✓ qa-validator agent - Comprehensive testing & QA specialist
-✓ dx-docs-improver agent - Documentation & DX optimization
-✓ Complete Vercel/Render deployment guide (329 lines)
-✓ Render configuration (render.yaml)
-✓ Backend startup script (start.sh)
-✓ Agent specifications + PHRs (1,700+ lines)
-✓ 10 files added/modified
+✓ OpenAI GPT-4 integration for natural language understanding
+✓ MCP Server with 6 task management tools
+✓ Split-view UI with chat and dashboard
+✓ Real-time AI streaming responses
+✓ Context-aware conversation management
+✓ 8 new React components (TodoChat, TaskDashboard, etc.)
+✓ Enhanced state management with React Context
+✓ Complete SpecKit Plus workflow documentation
+✓ 7 specialized agents for quality assurance
+✓ Comprehensive specifications (2,000+ lines)
 
-Total Agent Ecosystem: 7 specialized agents
+Total Lines Added: 22,000+
+Total Files: 154 new files
 ```
 
 ### Previous Updates
 - **Phase II Complete**: Full-stack web app with Next.js + FastAPI
-- **Agent System**: 5 specialized agents for code quality
+- **Agent System**: 7 specialized agents for code quality
 - **Security**: JWT authentication + user isolation
-- **Documentation**: 3,000+ lines across all phases
+- **Documentation**: 6,000+ lines across all phases
 
 ---
 
@@ -598,7 +723,7 @@ Total Agent Ecosystem: 7 specialized agents
 ### Phase II Features
 ✅ Next.js 16 frontend with React 19
 ✅ FastAPI backend with SQLModel
-✅ PostgreSQL database
+✅ PostgreSQL database support
 ✅ JWT authentication
 ✅ Multi-user data isolation
 ✅ Protected routes & API endpoints
@@ -606,23 +731,43 @@ Total Agent Ecosystem: 7 specialized agents
 ✅ CRUD operations for tasks
 ✅ User registration & login
 
-### Phase III Features (Deployment)
-✅ Vercel deployment configuration
-✅ Render deployment configuration
-✅ PostgreSQL managed database
-✅ Environment variable management
-✅ Complete deployment guide
-✅ Production-ready infrastructure
+### Phase III Features
+✅ OpenAI GPT-4 integration
+✅ Natural language task management
+✅ MCP Server with tool execution
+✅ Real-time chat interface
+✅ Split-view layout (Chat + Dashboard)
+✅ Context-aware AI responses
+✅ Conversation history persistence
+✅ Task statistics and analytics
+✅ Priority and status management
+✅ Streaming AI responses
+✅ Enhanced UI/UX with glassmorphism
+✅ Complete SpecKit Plus integration
 
-### Agent Ecosystem Features 🆕
-✅ 7 specialized development agents
-✅ Workflow compliance enforcement
-✅ Spec-driven validation
-✅ Frontend UI optimization
-✅ Backend architecture validation
-✅ Security & auth review
-✅ Comprehensive QA testing
-✅ Documentation improvement
+---
+
+## 📚 Documentation
+
+### Project Documentation
+- **Root README**: This file - complete project overview
+- **Phase I README**: [`phase1/README.md`](./phase1/README.md)
+- **Phase I Agents**: [`phase1/AGENTS_README.md`](./phase1/AGENTS_README.md)
+- **Phase II Guide**: [`phase2/CLAUDE.md`](./phase2/CLAUDE.md)
+- **Phase II Deployment**: [`phase2/DEPLOYMENT_GUIDE.md`](./phase2/DEPLOYMENT_GUIDE.md)
+- **Phase III Quick Start**: [`phase3/QUICKSTART.md`](./phase3/QUICKSTART.md)
+- **Phase III Guide**: [`phase3/CLAUDE.md`](./phase3/CLAUDE.md)
+
+### Development Guides
+- **Frontend Guide (Phase II)**: [`phase2/frontend/CLAUDE.md`](./phase2/frontend/CLAUDE.md)
+- **Backend Guide (Phase II)**: [`phase2/backend/CLAUDE.md`](./phase2/backend/CLAUDE.md)
+- **Phase III Spec**: [`phase3/specs/001-ai-todo-chatbot/spec.md`](./phase3/specs/001-ai-todo-chatbot/spec.md)
+- **Phase III Plan**: [`phase3/specs/001-ai-todo-chatbot/plan.md`](./phase3/specs/001-ai-todo-chatbot/plan.md)
+
+### Agent Documentation
+- **Agent Specs**: `specs/agents/*.md` - 7 agent specifications
+- **Agent PHRs**: `history/agents/*.phr.md` - Prompt history records
+- **Agent Configs**: `.claude/agents/*.md` - Claude Code configs
 
 ---
 
@@ -655,22 +800,35 @@ This project is part of Hackathon II - Spec-Driven Development Challenge.
 
 ## 🔗 Quick Links
 
-### Documentation
-- 📚 [Phase I Agent System](./phase1/AGENTS_README.md)
+### Phase I Documentation
+- 📚 [Phase I README](./phase1/README.md)
+- 📚 [Agent System Guide](./phase1/AGENTS_README.md)
+- 📝 [Phase I Spec](./phase1/specs/spec.md)
+
+### Phase II Documentation
 - 📚 [Phase II Full-Stack Guide](./phase2/CLAUDE.md)
-- 🚀 [Deployment Guide](./phase2/DEPLOYMENT_GUIDE.md) 🆕
+- 🚀 [Deployment Guide](./phase2/DEPLOYMENT_GUIDE.md)
 - 🎨 [Frontend Guide](./phase2/frontend/CLAUDE.md)
 - ⚙️ [Backend Guide](./phase2/backend/CLAUDE.md)
-
-### Specifications
-- 📝 [Phase I Spec](./phase1/specs/spec.md)
 - 📝 [Phase II Specs](./phase2/specs/)
+
+### Phase III Documentation
+- 📚 [Phase III Quick Start](./phase3/QUICKSTART.md)
+- 📚 [Phase III Project Guide](./phase3/CLAUDE.md)
+- 📝 [AI Chatbot Spec](./phase3/specs/001-ai-todo-chatbot/spec.md)
+- 📝 [Implementation Plan](./phase3/specs/001-ai-todo-chatbot/plan.md)
+- 📝 [Data Model](./phase3/specs/001-ai-todo-chatbot/data-model.md)
+
+### Agent System
 - 🤖 [Agent Specs](./specs/agents/)
+- 🤖 [Agent PHRs](./history/agents/)
 
 ### Code
 - 💻 [Phase I Source](./phase1/src/)
 - 💻 [Phase II Frontend](./phase2/frontend/src/)
 - 💻 [Phase II Backend](./phase2/backend/src/)
+- 💻 [Phase III Frontend](./phase3/frontend/src/)
+- 💻 [Phase III Backend](./phase3/backend/src/)
 
 ### Testing
 - 🧪 [Phase I Tests](./phase1/tests/)
@@ -678,7 +836,7 @@ This project is part of Hackathon II - Spec-Driven Development Challenge.
 
 ---
 
-**Last Updated**: January 12, 2026
-**Latest Version**: Phase II v2.0 + Agent Ecosystem v1.1
-**Status**: Production Ready ✅ | Deployment Ready 🚀
+**Last Updated**: January 19, 2026
+**Latest Version**: Phase III v1.0 - AI-Powered Todo Chatbot
+**Status**: All Phases Complete ✅
 **Documentation**: Complete 📚 | Agent-Validated ✅
