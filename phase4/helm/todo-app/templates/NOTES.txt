@@ -1,0 +1,86 @@
+🎉 Todo App has been deployed successfully!
+
+Application Components:
+- Backend (FastAPI): {{ .Values.backend.replicaCount }} replicas
+- Frontend (Next.js): {{ .Values.frontend.replicaCount }} replicas
+
+📝 Getting Access to the Application:
+
+{{- if eq .Values.frontend.service.type "NodePort" }}
+
+1. Frontend (NodePort):
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "todo-app.fullname" . }}-frontend)
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+
+   Access via: http://$NODE_IP:$NODE_PORT
+
+   Or using Minikube:
+   minikube service {{ include "todo-app.fullname" . }}-frontend --url
+
+{{- else }}
+
+1. Frontend:
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "todo-app.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+
+   Access via: http://localhost:{{ .Values.frontend.service.port }}
+
+{{- end }}
+
+2. Backend API:
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "todo-app.fullname" . }}-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }}
+
+   Access via: http://localhost:{{ .Values.backend.service.port }}
+   API Docs: http://localhost:{{ .Values.backend.service.port }}/docs
+
+{{- if .Values.ingress.enabled }}
+
+3. Ingress (if configured):
+{{- range .Values.ingress.hosts }}
+   http://{{ .host }}
+{{- end }}
+
+   Add to /etc/hosts (or C:\Windows\System32\drivers\etc\hosts on Windows):
+   $(minikube ip) {{ (index .Values.ingress.hosts 0).host }}
+{{- end }}
+
+🔍 Verification Commands:
+
+# Check pod status
+kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+# View backend logs
+kubectl logs --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=backend" -f
+
+# View frontend logs
+kubectl logs --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=frontend" -f
+
+# Check service status
+kubectl get services --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+# Check ingress (if enabled)
+{{- if .Values.ingress.enabled }}
+kubectl get ingress --namespace {{ .Release.Namespace }} {{ include "todo-app.fullname" . }}
+{{- end }}
+
+⚙️ Configuration:
+
+Backend URL (internal): http://{{ include "todo-app.fullname" . }}-backend:{{ .Values.backend.service.port }}
+Frontend URL (internal): http://{{ include "todo-app.fullname" . }}-frontend:{{ .Values.frontend.service.port }}
+
+{{- if .Values.backend.persistence.enabled }}
+
+💾 Persistent Storage:
+PVC Name: {{ include "todo-app.fullname" . }}-backend-pvc
+Size: {{ .Values.backend.persistence.size }}
+Mount Path: {{ .Values.backend.persistence.mountPath }}
+{{- end }}
+
+⚠️ Important Notes:
+1. Make sure to set your OpenAI API key and JWT secret before deployment
+2. For Minikube: Use `minikube tunnel` in a separate terminal if using LoadBalancer type services
+3. Database is persisted in a PersistentVolume - data survives pod restarts
+
+📚 For more information:
+   helm status {{ .Release.Name }}
+   kubectl describe deployment {{ include "todo-app.fullname" . }}-backend
+   kubectl describe deployment {{ include "todo-app.fullname" . }}-frontend

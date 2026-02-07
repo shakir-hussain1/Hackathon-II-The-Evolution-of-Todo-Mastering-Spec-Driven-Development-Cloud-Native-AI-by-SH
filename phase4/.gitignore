@@ -1,0 +1,46 @@
+# Phase IV - Kubernetes Deployment
+# Ignore files for local development and secrets
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Docker build artifacts
+docker/*.log
+docker/build-cache/
+
+# Kubernetes secrets
+k8s/*.secret.yaml
+k8s/secrets/
+*.key
+*.crt
+kubeconfig*
+
+# Helm packaging
+helm/**/*.tgz
+helm/**/charts/*.tgz
+
+# Script logs
+scripts/*.log
+scripts/ai-commands.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Build artifacts
+dist/
+build/
+out/
