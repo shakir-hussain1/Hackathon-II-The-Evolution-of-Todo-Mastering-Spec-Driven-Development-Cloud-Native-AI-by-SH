@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  /* Smooth transitions */
+  .transition-all-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Fade in animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Skeleton loading animation */
+  .skeleton {
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% {
+      background-color: rgba(226, 232, 240, 1);
+    }
+    50% {
+      background-color: rgba(241, 245, 249, 1);
+    }
+    100% {
+      background-color: rgba(226, 232, 240, 1);
+    }
+  }
+
+  /* Pulse animation for loading states */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}

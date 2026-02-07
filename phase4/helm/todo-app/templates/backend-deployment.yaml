@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-app.fullname" . }}-backend
+  labels:
+    {{- include "todo-app.backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo-app.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "todo-app.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.backend.name }}
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - name: {{ .Values.backend.service.name }}
+          containerPort: {{ .Values.backend.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- range .Values.backend.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        {{- range .Values.backend.secrets }}
+        - name: {{ .name }}
+          valueFrom:
+            {{- toYaml .valueFrom | nindent 12 }}
+        {{- end }}
+        {{- if .Values.backend.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.backend.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.backend.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.backend.readinessProbe | nindent 10 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+        {{- if .Values.backend.persistence.enabled }}
+        volumeMounts:
+        - name: backend-data
+          mountPath: {{ .Values.backend.persistence.mountPath }}
+        {{- end }}
+      {{- if .Values.backend.persistence.enabled }}
+      volumes:
+      - name: backend-data
+        persistentVolumeClaim:
+          claimName: {{ include "todo-app.fullname" . }}-backend-pvc
+      {{- end }}

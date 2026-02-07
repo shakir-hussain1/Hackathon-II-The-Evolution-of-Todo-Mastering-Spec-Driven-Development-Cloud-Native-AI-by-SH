@@ -1,0 +1,170 @@
+# Default values for todo-app Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  imagePullPolicy: IfNotPresent
+
+# Backend (FastAPI) configuration
+backend:
+  name: todo-backend
+  replicaCount: 2
+
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 7860
+    name: http
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # Environment variables
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+    - name: DEBUG
+      value: "false"
+    - name: JWT_ALGORITHM
+      value: "HS256"
+    - name: JWT_EXPIRATION_HOURS
+      value: "24"
+    - name: CORS_ORIGINS
+      value: "http://localhost:3000,http://localhost:30080"
+    - name: DATABASE_URL
+      value: "sqlite:///app/data/todos.db"
+
+  # Secrets (to be created separately or via sealed-secrets)
+  secrets:
+    - name: OPENAI_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: todo-secrets
+          key: openai-api-key
+    - name: JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: todo-secrets
+          key: jwt-secret
+
+  # Persistent volume for SQLite database
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    mountPath: /app/data
+
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 7860
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 7860
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Frontend (Next.js) configuration
+frontend:
+  name: todo-frontend
+  replicaCount: 2
+
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 3000
+    targetPort: 3000
+    nodePort: 30080
+    name: http
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+  # Environment variables
+  env:
+    - name: NODE_ENV
+      value: "production"
+    - name: NEXT_PUBLIC_API_URL
+      value: "http://todo-backend:8000"
+
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+  hosts:
+    - host: todo-app.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: todo-backend
+              port: 8000
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: todo-frontend
+              port: 3000
+
+# Secret management
+secrets:
+  create: true
+  # These values should be overridden via --set or separate values file
+  # NEVER commit real secrets to git
+  openaiApiKey: "REPLACE_WITH_YOUR_OPENAI_API_KEY"
+  jwtSecret: "REPLACE_WITH_YOUR_JWT_SECRET"
