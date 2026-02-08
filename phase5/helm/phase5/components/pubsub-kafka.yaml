@@ -1,0 +1,52 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub-kafka
+  namespace: {{ .Values.global.namespace | default "phase5" }}
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    # Kafka broker addresses
+    - name: brokers
+      value: "{{ .Release.Name }}-kafka.{{ .Values.global.namespace | default "phase5" }}.svc.cluster.local:9092"
+
+    # Consumer group for this application
+    - name: consumerGroup
+      value: "phase5-consumer-group"
+
+    # Client ID for Kafka
+    - name: clientID
+      value: "phase5-dapr-client"
+
+    # Authentication type (none for local, SASL for production)
+    - name: authType
+      value: "none"
+
+    # Enable idempotent writes
+    - name: idempotent
+      value: "true"
+
+    # Max message bytes (10MB)
+    - name: maxMessageBytes
+      value: "10485760"
+
+    # Consumer fetch default (1MB)
+    - name: consumerFetchDefault
+      value: "1048576"
+
+    # Version
+    - name: version
+      value: "2.8.0"
+
+    # Initial offset
+    - name: initialOffset
+      value: "newest"
+
+  # Scopes - define which apps can use this component
+  scopes:
+    - chat-api
+    - notification-service
+    - recurring-task-service
+    - audit-service
+    - websocket-sync-service

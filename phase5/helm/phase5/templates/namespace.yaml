@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.global.namespace | default "phase5" }}
+  labels:
+    name: {{ .Values.global.namespace | default "phase5" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    istio-injection: disabled
+    dapr-enabled: "true"

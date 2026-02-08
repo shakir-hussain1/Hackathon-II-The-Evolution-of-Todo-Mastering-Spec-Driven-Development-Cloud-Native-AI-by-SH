@@ -1,0 +1,108 @@
+replicaCount: 2
+
+image:
+  repository: phase5/websocket-sync-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Dapr configuration
+dapr:
+  enabled: true
+  appId: websocket-sync-service
+  appPort: 8004
+  appProtocol: http
+  enableProfiling: false
+  logLevel: info
+  enableMetrics: true
+  metricsPort: 9090
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8004
+  targetPort: 8004
+
+# Environment variables
+env:
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: postgres-secret
+        key: connection-string
+  - name: KAFKA_BROKERS
+    value: "phase5-kafka:9092"
+  - name: LOG_LEVEL
+    value: "INFO"
+
+# Resource limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "50m"
+  limits:
+    memory: "512Mi"
+    cpu: "250m"
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8004
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8004
+  initialDelaySeconds: 20
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - websocket-sync-service
+          topologyKey: kubernetes.io/hostname

@@ -1,0 +1,20 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: cron-recurring-tasks
+  namespace: {{ .Values.global.namespace | default "phase5" }}
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Cron expression: every 5 minutes
+    - name: schedule
+      value: "*/5 * * * *"
+
+    # Direction (input only)
+    - name: direction
+      value: "input"
+
+  # Scoped to recurring task service only
+  scopes:
+    - recurring-task-service
