@@ -840,3 +840,85 @@ This project is part of Hackathon II - Spec-Driven Development Challenge.
 **Latest Version**: Phase III v1.0 - AI-Powered Todo Chatbot
 **Status**: All Phases Complete ✅
 **Documentation**: Complete 📚 | Agent-Validated ✅
+
+| **Phase IV** | Kubernetes Deployment with Minikube & Helm | **COMPLETE** ✅ |
+| **Phase V** | Advanced Cloud-Native Microservices (Kafka + Dapr + OKE) | **COMPLETE** ✅ |
+
+---
+
+## 🚀 Phase V: Advanced Cloud-Native Todo System ⭐ CURRENT
+
+### Event-Driven Microservices Architecture
+
+**Technologies**: Kafka, Dapr, Kubernetes (Oracle OKE), 6 Microservices, Real-Time WebSocket Sync
+
+### Key Features
+- 🔄 **Event-Driven**: Apache Kafka for async communication between services
+- ☁️ **Cloud-Native**: Dapr runtime for portable abstractions
+- 📡 **Real-Time Sync**: WebSocket for instant cross-device updates
+- 🤖 **AI-Powered**: GPT-4 integration for natural language task management
+- 🎯 **Production-Ready**: HPA, health checks, distributed tracing
+
+### Architecture
+```
+Frontend (Next.js) → Ingress → [6 Microservices + Dapr Sidecars] → Kafka → PostgreSQL
+```
+
+**Services**:
+1. Chat API - Task CRUD, AI chat, auth
+2. Notification Service - Reminders and notifications
+3. Recurring Task Service - Auto-generate recurring instances
+4. Audit Service - Event logging for compliance
+5. WebSocket Sync Service - Real-time synchronization
+6. Frontend - Next.js React app
+
+**Documentation**: [`phase5/README.md`](phase5/README.md)
+**Deployment Guide**: [`phase5/ORACLE_OKE_DEPLOYMENT.md`](phase5/ORACLE_OKE_DEPLOYMENT.md)
+**Demo Video Guide**: [`phase5/DEMO_VIDEO_GUIDE.md`](phase5/DEMO_VIDEO_GUIDE.md)
+
+---
+
+## 📦 Quick Start (Phase V)
+
+### Local Development
+```bash
+cd phase5
+docker-compose up -d
+open http://localhost:3000
+```
+
+### Cloud Deployment (Oracle OKE)
+```bash
+cd phase5/helm
+./deploy-oke.sh
+kubectl get ingress -n phase5  # Get public URL
+```
+
+---
+
+## 🎓 Learning Journey
+
+### Phase I → II: Web Development
+Learned REST APIs, frontend-backend separation, PostgreSQL
+
+### Phase II → III: AI Integration
+Learned LLM integration, prompt engineering, AI chat interfaces
+
+### Phase III → IV: Kubernetes
+Learned containerization, Helm charts, Kubernetes orchestration
+
+### Phase IV → V: Cloud-Native Microservices
+Learned event-driven architecture, Kafka, Dapr, microservices patterns
+
+---
+
+## 🏆 Hackathon Submission
+
+**✅ GitHub Repository**: All 5 phases with complete code
+**✅ Deployed Application**: Oracle OKE with public URL
+**✅ Demo Video**: 10-minute comprehensive walkthrough
+**✅ Documentation**: Architecture diagrams, deployment guides
+
+**Deadline**: February 9, 2026
+**Status**: Ready for submission 🎯
+

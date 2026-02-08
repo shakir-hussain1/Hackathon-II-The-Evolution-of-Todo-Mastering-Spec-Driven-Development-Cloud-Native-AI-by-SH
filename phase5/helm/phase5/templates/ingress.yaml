@@ -1,0 +1,101 @@
+{{- if .Values.frontend.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  namespace: {{ .Values.global.namespace | default "phase5" }}
+  labels:
+    app.kubernetes.io/name: ingress
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    {{- with .Values.frontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    # Additional annotations for production
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+spec:
+  ingressClassName: {{ .Values.frontend.ingress.className }}
+  {{- if .Values.frontend.ingress.tls }}
+  tls:
+    {{- range .Values.frontend.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.frontend.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          # Frontend routes
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Release.Name }}-frontend
+                port:
+                  number: 3000
+
+          # API routes (proxied to chat-api)
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Release.Name }}-chat-api
+                port:
+                  number: 8000
+
+          # WebSocket routes
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Release.Name }}-websocket-sync-service
+                port:
+                  number: 8004
+    {{- end }}
+---
+# Separate API ingress for direct API access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-api-ingress
+  namespace: {{ .Values.global.namespace | default "phase5" }}
+  labels:
+    app.kubernetes.io/name: api-ingress
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    {{- with .Values.frontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: {{ .Values.frontend.ingress.className }}
+  {{- if .Values.frontend.ingress.tls }}
+  tls:
+    {{- range .Values.frontend.ingress.tls }}
+    - hosts:
+        - api.{{ (index .hosts 0) | trimPrefix "phase5." }}
+      secretName: {{ .secretName }}-api
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: api.{{ (index .Values.frontend.ingress.hosts 0).host | trimPrefix "phase5." }}
+      http:
+        paths:
+          - path: /(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-chat-api
+                port:
+                  number: 8000
+{{- end }}

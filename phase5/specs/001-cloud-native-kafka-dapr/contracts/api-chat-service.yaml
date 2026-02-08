@@ -1,0 +1,514 @@
+openapi: 3.0.3
+info:
+  title: Chat API Service - Phase V
+  description: |
+    RESTful API for AI-powered todo management with advanced features.
+    Extends Phase III chat API with recurring tasks, priorities, tags, and search.
+  version: 5.0.0
+  contact:
+    name: Phase V Team
+    email: phase5@hackathon.local
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
+  - url: https://chat-api.phase5.local/api/v1
+    description: Minikube cluster
+  - url: https://chat-api.phase5.cloud/api/v1
+    description: Production (Oracle OKE)
+
+tags:
+  - name: Tasks
+    description: Task CRUD operations with advanced features
+  - name: Chat
+    description: AI chat interface for task management
+  - name: Search
+    description: Full-text search and filtering
+  - name: Health
+    description: Health and readiness checks
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /tasks:
+    get:
+      summary: List all tasks for authenticated user
+      tags: [Tasks]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, archived]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: tags
+          in: query
+          description: Comma-separated list of tags
+          schema:
+            type: string
+          example: "work,urgent"
+        - name: due_before
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: due_after
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_asc, created_desc, due_asc, due_desc, priority_asc, priority_desc, title_asc, title_desc]
+          default: created_desc
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/{task_id}:
+    get:
+      summary: Get a single task by ID
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      summary: Update a task (partial update)
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      summary: Soft delete a task
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/search:
+    get:
+      summary: Full-text search across task titles and descriptions
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+          example: "project deadline"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /chat:
+    post:
+      summary: Send a message to AI chat assistant
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [ok, error]
+            kafka:
+              type: string
+              enum: [ok, error]
+            dapr:
+              type: string
+              enum: [ok, error]
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+          default: medium
+        due_date:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["work", "urgent"]
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, archived]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+          nullable: true
+        version:
+          type: integer
+          description: Current version for optimistic locking
+
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, archived]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+          nullable: true
+        next_occurrence:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+
+    TaskListResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskResponse'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            has_more:
+              type: boolean
+
+    RecurrencePattern:
+      type: object
+      required:
+        - frequency
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        interval:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Repeat every N units (e.g., every 2 weeks)
+        days_of_week:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Days of week (0=Sunday, 6=Saturday)
+          example: [1, 3, 5]
+        day_of_month:
+          type: integer
+          minimum: 1
+          maximum: 31
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        occurrences_count:
+          type: integer
+          minimum: 1
+          nullable: true
+
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          example: "Create a task to review code tomorrow"
+        conversation_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [task_created, task_updated, task_deleted, search_performed]
+              task_id:
+                type: string
+                format: uuid
+                nullable: true
+              details:
+                type: object
+        conversation_id:
+          type: string
+          format: uuid
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Conflict:
+      description: Version conflict (optimistic locking failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "VersionConflict"
+            message: "Task was modified by another process. Please refresh and try again."
+            details:
+              current_version: 5
+              provided_version: 4

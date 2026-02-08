@@ -1,0 +1,68 @@
+apiVersion: v2
+name: phase5
+description: Phase V Cloud-Native Todo Application with Dapr and Kafka
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - todo
+  - dapr
+  - kafka
+  - microservices
+  - websocket
+
+maintainers:
+  - name: Phase5 Team
+    email: team@phase5.dev
+
+dependencies:
+  - name: postgresql
+    version: "12.12.10"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - infrastructure
+
+  - name: kafka
+    version: "26.4.3"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled
+    tags:
+      - infrastructure
+
+  - name: chat-api
+    version: "1.0.0"
+    condition: chat-api.enabled
+    tags:
+      - service
+
+  - name: notification-service
+    version: "1.0.0"
+    condition: notification-service.enabled
+    tags:
+      - service
+
+  - name: recurring-task-service
+    version: "1.0.0"
+    condition: recurring-task-service.enabled
+    tags:
+      - service
+
+  - name: audit-service
+    version: "1.0.0"
+    condition: audit-service.enabled
+    tags:
+      - service
+
+  - name: websocket-sync-service
+    version: "1.0.0"
+    condition: websocket-sync-service.enabled
+    tags:
+      - service
+
+  - name: frontend
+    version: "1.0.0"
+    condition: frontend.enabled
+    tags:
+      - frontend

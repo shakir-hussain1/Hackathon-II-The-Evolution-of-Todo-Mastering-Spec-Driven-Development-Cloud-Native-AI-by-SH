@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "websocket-sync-service.fullname" . }}
+  namespace: {{ .Values.global.namespace | default "phase5" }}
+  labels:
+    {{- include "websocket-sync-service.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "websocket-sync-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Dapr annotations
+        dapr.io/enabled: "{{ .Values.dapr.enabled }}"
+        dapr.io/app-id: "{{ .Values.dapr.appId }}"
+        dapr.io/app-port: "{{ .Values.dapr.appPort }}"
+        dapr.io/app-protocol: "{{ .Values.dapr.appProtocol }}"
+        dapr.io/log-level: "{{ .Values.dapr.logLevel }}"
+        dapr.io/enable-metrics: "{{ .Values.dapr.enableMetrics }}"
+        dapr.io/metrics-port: "{{ .Values.dapr.metricsPort }}"
+        dapr.io/config: "dapr-config"
+        dapr.io/enable-profiling: "{{ .Values.dapr.enableProfiling }}"
+        # Restart on config change
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "websocket-sync-service.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "websocket-sync-service.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.image.repository }}{{ if .Values.global.imageRegistry }}/{{ .Values.image.repository }}{{ end }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dapr.appPort }}
+              protocol: TCP
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

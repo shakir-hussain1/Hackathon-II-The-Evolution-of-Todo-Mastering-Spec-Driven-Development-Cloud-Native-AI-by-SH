@@ -1,0 +1,544 @@
+# Kafka Event Schemas - Phase V
+
+## Overview
+
+All events follow the **CloudEvents 1.0** specification for interoperability.
+
+**Key Properties**:
+- `specversion`: "1.0"
+- `type`: Event type (e.g., "com.todo.task.created")
+- `source`: Service that published the event
+- `id`: Unique event ID (UUID)
+- `time`: Timestamp (ISO 8601 UTC)
+- `datacontenttype`: "application/json"
+- `data`: Event payload
+
+---
+
+## Topics
+
+### 1. `task-events` - Task Lifecycle Events
+
+**Partition Key**: `user_id` (ensures ordering per user)
+**Retention**: 7 days
+**Replication Factor**: 3
+
+**Events**:
+- `com.todo.task.created`
+- `com.todo.task.updated`
+- `com.todo.task.deleted`
+- `com.todo.task.completed`
+
+---
+
+### Event: `com.todo.task.created`
+
+**Producer**: `chat-api`
+**Consumers**: `audit-service`, `notification-service`, `recurring-task-service`, `websocket-sync-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.task.created",
+  "source": "chat-api",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "time": "2026-02-08T15:30:00Z",
+  "datacontenttype": "application/json",
+  "subject": "task/123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Review Phase V PRs",
+    "description": "Review all open PRs before demo",
+    "status": "pending",
+    "priority": "high",
+    "due_date": "2026-02-09T18:00:00Z",
+    "tags": ["work", "hackathon", "urgent"],
+    "recurrence_pattern": null,
+    "created_at": "2026-02-08T15:30:00Z",
+    "version": 1
+  }
+}
+```
+
+**Schema (data field)**:
+```yaml
+type: object
+required:
+  - task_id
+  - user_id
+  - title
+  - status
+  - priority
+  - created_at
+  - version
+properties:
+  task_id:
+    type: string
+    format: uuid
+  user_id:
+    type: string
+    format: uuid
+  title:
+    type: string
+    maxLength: 200
+  description:
+    type: string
+    nullable: true
+  status:
+    type: string
+    enum: [pending, completed, archived]
+  priority:
+    type: string
+    enum: [high, medium, low]
+  due_date:
+    type: string
+    format: date-time
+    nullable: true
+  tags:
+    type: array
+    items:
+      type: string
+  recurrence_pattern:
+    type: object
+    nullable: true
+  created_at:
+    type: string
+    format: date-time
+  version:
+    type: integer
+```
+
+---
+
+### Event: `com.todo.task.updated`
+
+**Producer**: `chat-api`
+**Consumers**: `audit-service`, `notification-service`, `websocket-sync-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.task.updated",
+  "source": "chat-api",
+  "id": "660f9500-f39c-52e5-b827-557766551111",
+  "time": "2026-02-08T16:00:00Z",
+  "datacontenttype": "application/json",
+  "subject": "task/123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "changes": {
+      "title": {
+        "old": "Review Phase V PRs",
+        "new": "Review Phase V PRs - HIGH PRIORITY"
+      },
+      "priority": {
+        "old": "high",
+        "new": "high"
+      }
+    },
+    "current_state": {
+      "title": "Review Phase V PRs - HIGH PRIORITY",
+      "status": "pending",
+      "priority": "high",
+      "due_date": "2026-02-09T18:00:00Z",
+      "tags": ["work", "hackathon", "urgent"],
+      "version": 2
+    },
+    "updated_at": "2026-02-08T16:00:00Z"
+  }
+}
+```
+
+**Schema (data field)**:
+```yaml
+type: object
+required:
+  - task_id
+  - user_id
+  - changes
+  - current_state
+  - updated_at
+properties:
+  task_id:
+    type: string
+    format: uuid
+  user_id:
+    type: string
+    format: uuid
+  changes:
+    type: object
+    description: Map of changed fields with old/new values
+  current_state:
+    type: object
+    description: Full current task state after update
+  updated_at:
+    type: string
+    format: date-time
+```
+
+---
+
+### Event: `com.todo.task.completed`
+
+**Producer**: `chat-api`
+**Consumers**: `audit-service`, `notification-service`, `recurring-task-service`, `websocket-sync-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.task.completed",
+  "source": "chat-api",
+  "id": "770f9600-f49d-63f6-c938-668877662222",
+  "time": "2026-02-08T17:00:00Z",
+  "datacontenttype": "application/json",
+  "subject": "task/123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Review Phase V PRs - HIGH PRIORITY",
+    "completed_at": "2026-02-08T17:00:00Z",
+    "is_recurring": false,
+    "recurrence_pattern": null
+  }
+}
+```
+
+**Use Case**: `recurring-task-service` listens for completed recurring tasks to schedule next occurrence.
+
+---
+
+### Event: `com.todo.task.deleted`
+
+**Producer**: `chat-api`
+**Consumers**: `audit-service`, `websocket-sync-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.task.deleted",
+  "source": "chat-api",
+  "id": "880f9700-f59e-74g7-d049-779988773333",
+  "time": "2026-02-08T18:00:00Z",
+  "datacontenttype": "application/json",
+  "subject": "task/123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "deleted_at": "2026-02-08T18:00:00Z",
+    "soft_delete": true
+  }
+}
+```
+
+---
+
+## Topics
+
+### 2. `reminders` - Reminder Notifications
+
+**Partition Key**: `user_id`
+**Retention**: 3 days
+**Replication Factor**: 3
+
+**Events**:
+- `com.todo.reminder.scheduled`
+- `com.todo.reminder.sent`
+- `com.todo.reminder.failed`
+
+---
+
+### Event: `com.todo.reminder.scheduled`
+
+**Producer**: `notification-service`
+**Consumers**: `audit-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.reminder.scheduled",
+  "source": "notification-service",
+  "id": "990f9800-f69f-85h8-e150-880099884444",
+  "time": "2026-02-08T15:30:00Z",
+  "datacontenttype": "application/json",
+  "subject": "reminder/234e5678-e90c-23e4-b567-537725285001",
+  "data": {
+    "reminder_id": "234e5678-e90c-23e4-b567-537725285001",
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "scheduled_at": "2026-02-09T17:00:00Z",
+    "channel": "email",
+    "message": "Reminder: Review Phase V PRs is due in 1 hour"
+  }
+}
+```
+
+---
+
+### Event: `com.todo.reminder.sent`
+
+**Producer**: `notification-service`
+**Consumers**: `audit-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.reminder.sent",
+  "source": "notification-service",
+  "id": "aa0f9900-f79g-96i9-f261-991100995555",
+  "time": "2026-02-09T17:00:05Z",
+  "datacontenttype": "application/json",
+  "subject": "reminder/234e5678-e90c-23e4-b567-537725285001",
+  "data": {
+    "reminder_id": "234e5678-e90c-23e4-b567-537725285001",
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "sent_at": "2026-02-09T17:00:05Z",
+    "channel": "email",
+    "status": "sent"
+  }
+}
+```
+
+---
+
+### Event: `com.todo.reminder.failed`
+
+**Producer**: `notification-service`
+**Consumers**: `audit-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.reminder.failed",
+  "source": "notification-service",
+  "id": "bb0fa000-f89h-07j0-g372-002211006666",
+  "time": "2026-02-09T17:00:10Z",
+  "datacontenttype": "application/json",
+  "subject": "reminder/234e5678-e90c-23e4-b567-537725285001",
+  "data": {
+    "reminder_id": "234e5678-e90c-23e4-b567-537725285001",
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "failed_at": "2026-02-09T17:00:10Z",
+    "channel": "email",
+    "error_code": "SMTP_TIMEOUT",
+    "error_message": "Failed to connect to SMTP server",
+    "retry_count": 2
+  }
+}
+```
+
+---
+
+## Topics
+
+### 3. `task-updates` - Real-Time Synchronization
+
+**Partition Key**: `user_id`
+**Retention**: 1 day
+**Replication Factor**: 3
+
+**Events**:
+- `com.todo.sync.task_changed` (all CRUD operations)
+
+---
+
+### Event: `com.todo.sync.task_changed`
+
+**Producer**: `chat-api`
+**Consumers**: `websocket-sync-service`
+
+**CloudEvents Envelope**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.sync.task_changed",
+  "source": "chat-api",
+  "id": "cc0fb100-f99i-18k1-h483-113322117777",
+  "time": "2026-02-08T16:00:00Z",
+  "datacontenttype": "application/json",
+  "subject": "task/123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "operation": "update",
+    "task_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "current_state": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "title": "Review Phase V PRs - HIGH PRIORITY",
+      "status": "pending",
+      "priority": "high",
+      "due_date": "2026-02-09T18:00:00Z",
+      "tags": ["work", "hackathon", "urgent"],
+      "version": 2,
+      "updated_at": "2026-02-08T16:00:00Z"
+    }
+  }
+}
+```
+
+**Schema (data field)**:
+```yaml
+type: object
+required:
+  - operation
+  - task_id
+  - user_id
+  - current_state
+properties:
+  operation:
+    type: string
+    enum: [create, update, delete, complete]
+  task_id:
+    type: string
+    format: uuid
+  user_id:
+    type: string
+    format: uuid
+  current_state:
+    type: object
+    description: Full task state for WebSocket broadcast
+```
+
+---
+
+## Event Publishing Patterns
+
+### 1. Idempotency
+
+All events include a unique `id` field (UUID). Consumers MUST deduplicate using this ID.
+
+**Implementation**:
+```python
+# Consumer-side deduplication
+if redis.exists(f"processed_event:{event_id}"):
+    return  # Already processed
+
+# Process event
+process_event(event)
+
+# Mark as processed (TTL = retention period)
+redis.setex(f"processed_event:{event_id}", ttl=86400*7, value="1")
+```
+
+---
+
+### 2. Correlation IDs
+
+All events include a `subject` field with the entity identifier (e.g., `task/uuid`).
+
+**Tracing**: Use OpenTelemetry to propagate trace context in CloudEvents extension fields:
+```json
+{
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "tracestate": "rojo=00f067aa0ba902b7"
+}
+```
+
+---
+
+### 3. Ordering Guarantees
+
+Kafka guarantees ordering **within a partition**. All events for the same user use `user_id` as partition key.
+
+**Example**: User updates Task A → Task B → Task A again. All three events are delivered in order.
+
+---
+
+### 4. Error Handling
+
+**Dead Letter Queue (DLQ)**:
+- Topic: `dlq-task-events`, `dlq-reminders`, `dlq-task-updates`
+- Consumer failures (after 3 retries) publish to DLQ
+- DLQ events include original event + error metadata
+
+**Schema**:
+```json
+{
+  "specversion": "1.0",
+  "type": "com.todo.dlq.event_failed",
+  "source": "notification-service",
+  "id": "dd0fc200-fa0j-29l2-i594-224433228888",
+  "time": "2026-02-09T17:00:15Z",
+  "data": {
+    "original_event": { /* Original CloudEvents envelope */ },
+    "error": {
+      "service": "notification-service",
+      "error_code": "PROCESSING_FAILED",
+      "error_message": "Failed to send email after 3 retries",
+      "retry_count": 3,
+      "timestamp": "2026-02-09T17:00:15Z"
+    }
+  }
+}
+```
+
+---
+
+## Consumer Configuration
+
+**Kafka Consumer Groups**:
+- `audit-service-consumer-group`
+- `notification-service-consumer-group`
+- `recurring-task-service-consumer-group`
+- `websocket-sync-service-consumer-group`
+
+**Consumer Settings**:
+```yaml
+group_id: "audit-service-consumer-group"
+auto_offset_reset: "earliest"
+enable_auto_commit: false
+max_poll_records: 100
+session_timeout_ms: 30000
+heartbeat_interval_ms: 10000
+```
+
+**Manual Commit**: After successfully processing each event:
+```python
+consumer.commit()
+```
+
+---
+
+## Validation
+
+**JSON Schema Validation**: All producers validate events against CloudEvents schema before publishing.
+
+**Library**: `cloudevents-python` (official CloudEvents SDK)
+
+**Example**:
+```python
+from cloudevents.http import CloudEvent
+
+event = CloudEvent({
+    "type": "com.todo.task.created",
+    "source": "chat-api",
+    "data": task_data
+})
+
+# Automatically validates CloudEvents format
+producer.send("task-events", event.to_json())
+```
+
+---
+
+## Summary
+
+This event schema design supports all Phase V functional requirements:
+
+- ✅ **FR-011 to FR-018**: Complete event-driven architecture
+- ✅ **CloudEvents 1.0**: Industry-standard format
+- ✅ **Idempotency**: Unique event IDs + consumer deduplication
+- ✅ **Ordering**: Partition by `user_id`
+- ✅ **Traceability**: Correlation IDs + OpenTelemetry
+- ✅ **Error Handling**: DLQ for failed events
+
+**Next Steps**: Define Dapr component specifications (`dapr-components.yaml`).

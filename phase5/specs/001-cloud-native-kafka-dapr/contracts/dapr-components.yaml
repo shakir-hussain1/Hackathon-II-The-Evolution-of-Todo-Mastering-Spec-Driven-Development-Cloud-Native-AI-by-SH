@@ -1,0 +1,519 @@
+# Dapr Component Specifications - Phase V
+
+## Overview
+
+This document defines all 5 Dapr components used in Phase V architecture.
+
+**Dapr Version**: 1.12+
+**Installation Mode**: Kubernetes (sidecar injection)
+
+---
+
+## Component 1: Pub/Sub (Kafka)
+
+**Purpose**: Event publishing and subscription for task events, reminders, and task updates.
+
+**Component YAML**: `components/pubsub-kafka.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub-kafka
+  namespace: phase5
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    # Broker configuration (Redpanda for Minikube, Strimzi for Cloud)
+    - name: brokers
+      value: "redpanda-0.redpanda.phase5.svc.cluster.local:9092,redpanda-1.redpanda.phase5.svc.cluster.local:9092,redpanda-2.redpanda.phase5.svc.cluster.local:9092"
+
+    # Consumer group configuration
+    - name: consumerGroup
+      value: "{appId}-consumer-group"  # {appId} replaced by Dapr runtime
+
+    # Authentication (none for local, SASL for cloud)
+    - name: authType
+      value: "none"
+
+    # CloudEvents support
+    - name: publishCloudEvents
+      value: "true"
+
+    # Consumer configuration
+    - name: autoOffsetReset
+      value: "earliest"
+    - name: enableAutoCommit
+      value: "false"
+    - name: maxMessageBytes
+      value: "1048576"  # 1MB
+
+    # Producer configuration
+    - name: acks
+      value: "all"
+    - name: compressionType
+      value: "snappy"
+
+    # Retry configuration
+    - name: maxRetries
+      value: "3"
+    - name: retryBackoff
+      value: "100ms"
+scopes:
+  - chat-api
+  - notification-service
+  - recurring-task-service
+  - audit-service
+  - websocket-sync-service
+```
+
+**Topics**:
+- `task-events`
+- `reminders`
+- `task-updates`
+
+**Usage Example (Python)**:
+```python
+from dapr.clients import DaprClient
+
+# Publish event
+with DaprClient() as client:
+    client.publish_event(
+        pubsub_name="pubsub-kafka",
+        topic_name="task-events",
+        data=json.dumps(event_data),
+        data_content_type="application/json"
+    )
+
+# Subscribe (via decorator)
+@app.subscribe(pubsub_name="pubsub-kafka", topic="task-events")
+def task_event_handler(event):
+    print(f"Received event: {event.data}")
+```
+
+---
+
+## Component 2: State Store (PostgreSQL)
+
+**Purpose**: Distributed state management for services (e.g., WebSocket connection state, consumer offsets).
+
+**Component YAML**: `components/statestore-postgresql.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore-postgresql
+  namespace: phase5
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+    # Connection string (from secret)
+    - name: connectionString
+      secretKeyRef:
+        name: postgres-secret
+        key: connection-string
+
+    # Table name for state storage
+    - name: tableName
+      value: "dapr_state"
+
+    # Metadata table (for TTL)
+    - name: metadataTableName
+      value: "dapr_metadata"
+
+    # Timeout configuration
+    - name: timeout
+      value: "20s"
+
+    # Actor state store support
+    - name: actorStateStore
+      value: "true"
+scopes:
+  - websocket-sync-service
+  - recurring-task-service
+```
+
+**State Operations**:
+```python
+from dapr.clients import DaprClient
+
+# Save state
+with DaprClient() as client:
+    client.save_state(
+        store_name="statestore-postgresql",
+        key="websocket:user:550e8400-e29b-41d4-a716-446655440000",
+        value=json.dumps(connection_data),
+        state_metadata={"ttl": "3600"}  # 1 hour TTL
+    )
+
+# Get state
+state = client.get_state(
+    store_name="statestore-postgresql",
+    key="websocket:user:550e8400-e29b-41d4-a716-446655440000"
+)
+
+# Delete state
+client.delete_state(
+    store_name="statestore-postgresql",
+    key="websocket:user:550e8400-e29b-41d4-a716-446655440000"
+)
+```
+
+---
+
+## Component 3: Secret Store (Kubernetes Secrets)
+
+**Purpose**: Secure access to secrets (database credentials, API keys, JWT secrets).
+
+**Component YAML**: `components/secretstore-kubernetes.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: secretstore-kubernetes
+  namespace: phase5
+spec:
+  type: secretstores.kubernetes
+  version: v1
+  metadata:
+    # No additional configuration needed for local secrets
+    # For production: use Azure Key Vault, AWS Secrets Manager, etc.
+scopes:
+  - chat-api
+  - notification-service
+  - recurring-task-service
+  - audit-service
+  - websocket-sync-service
+```
+
+**Secrets to Store**:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: phase5
+type: Opaque
+stringData:
+  connection-string: "postgresql://phase5_user:password@postgres:5432/phase5_db"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-secret
+  namespace: phase5
+type: Opaque
+stringData:
+  secret-key: "your-super-secret-jwt-key-change-in-production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smtp-secret
+  namespace: phase5
+type: Opaque
+stringData:
+  smtp-host: "smtp.gmail.com"
+  smtp-port: "587"
+  smtp-username: "noreply@phase5.local"
+  smtp-password: "app-password-here"
+```
+
+**Usage Example**:
+```python
+from dapr.clients import DaprClient
+
+# Get secret
+with DaprClient() as client:
+    secret = client.get_secret(
+        store_name="secretstore-kubernetes",
+        key="postgres-secret",
+        metadata={"namespace": "phase5"}
+    )
+    connection_string = secret.secrets["connection-string"]
+```
+
+---
+
+## Component 4: Bindings (Cron for Recurring Tasks)
+
+**Purpose**: Scheduled event triggers for recurring task creation and reminder processing.
+
+**Component YAML**: `components/cron-recurring-tasks.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: cron-recurring-tasks
+  namespace: phase5
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every 5 minutes
+    - name: schedule
+      value: "*/5 * * * *"
+
+    # Direction (input only - triggers events)
+    - name: direction
+      value: "input"
+scopes:
+  - recurring-task-service
+```
+
+**Component YAML**: `components/cron-reminders.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: cron-reminders
+  namespace: phase5
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every minute
+    - name: schedule
+      value: "* * * * *"
+
+    # Direction (input only)
+    - name: direction
+      value: "input"
+scopes:
+  - notification-service
+```
+
+**Usage Example**:
+```python
+from dapr.ext.fastapi import DaprApp
+
+app = FastAPI()
+dapr_app = DaprApp(app)
+
+# Input binding handler
+@dapr_app.binding("cron-recurring-tasks")
+def process_recurring_tasks(event):
+    """Triggered every 5 minutes to create recurring task instances"""
+    print("Processing recurring tasks...")
+    create_pending_task_instances()
+    return {"status": "ok"}
+
+@dapr_app.binding("cron-reminders")
+def process_reminders(event):
+    """Triggered every minute to send due reminders"""
+    print("Processing reminders...")
+    send_due_reminders()
+    return {"status": "ok"}
+```
+
+---
+
+## Component 5: Service Invocation (mDNS for Minikube)
+
+**Purpose**: Service-to-service communication for internal API calls (optional, HTTP preferred).
+
+**Configuration**: Enabled by default via Dapr sidecar annotations. No separate component YAML needed.
+
+**Service Annotations** (Deployment YAML):
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-api
+  namespace: phase5
+spec:
+  template:
+    metadata:
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "chat-api"
+        dapr.io/app-port: "8000"
+        dapr.io/log-level: "info"
+        dapr.io/sidecar-cpu-limit: "1000m"
+        dapr.io/sidecar-memory-limit: "512Mi"
+```
+
+**Usage Example** (if needed):
+```python
+from dapr.clients import DaprClient
+
+# Invoke chat-api from notification-service
+with DaprClient() as client:
+    response = client.invoke_method(
+        app_id="chat-api",
+        method_name="tasks/123e4567-e89b-12d3-a456-426614174000",
+        http_verb="GET"
+    )
+    task_data = response.json()
+```
+
+**Note**: Phase V prefers event-driven communication (Pub/Sub) over service invocation to minimize coupling. Service invocation is reserved for rare synchronous needs.
+
+---
+
+## Dapr Configuration (Global Settings)
+
+**Configuration YAML**: `components/dapr-config.yaml`
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+  namespace: phase5
+spec:
+  # Tracing configuration (Zipkin)
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin.phase5.svc.cluster.local:9411/api/v2/spans"
+
+  # Metrics configuration (Prometheus)
+  metric:
+    enabled: true
+
+  # Logging
+  logging:
+    level: "info"
+
+  # HTTP/gRPC settings
+  httpPipeline:
+    handlers:
+      - name: cors
+        type: middleware.http.cors
+
+  # Resiliency policies
+  resiliency:
+    policies:
+      retries:
+        default:
+          policy: exponential
+          maxRetries: 3
+          maxInterval: 10s
+          initialInterval: 1s
+
+      circuitBreakers:
+        default:
+          maxRequests: 1
+          interval: 10s
+          timeout: 60s
+          trip: consecutiveFailures > 5
+```
+
+---
+
+## Sidecar Resource Limits
+
+**Recommended Settings** (per deployment):
+```yaml
+annotations:
+  dapr.io/sidecar-cpu-limit: "1000m"      # 1 CPU core max
+  dapr.io/sidecar-cpu-request: "250m"     # 0.25 CPU core requested
+  dapr.io/sidecar-memory-limit: "512Mi"   # 512MB max
+  dapr.io/sidecar-memory-request: "128Mi" # 128MB requested
+```
+
+---
+
+## Health Checks
+
+**Dapr Health Endpoints**:
+- Liveness: `http://localhost:3500/v1.0/healthz`
+- Readiness: `http://localhost:3500/v1.0/health`
+
+**Kubernetes Probes**:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /v1.0/healthz
+    port: 3500
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /v1.0/health
+    port: 3500
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
+
+---
+
+## Installation Commands
+
+**Minikube (Dapr CLI)**:
+```bash
+# Install Dapr runtime in Kubernetes
+dapr init --kubernetes --wait
+
+# Verify installation
+dapr status -k
+
+# Apply components
+kubectl apply -f helm/phase5/components/
+```
+
+**Cloud (Helm)**:
+```bash
+# Add Dapr Helm repo
+helm repo add dapr https://dapr.github.io/helm-charts/
+helm repo update
+
+# Install Dapr
+helm install dapr dapr/dapr \
+  --namespace dapr-system \
+  --create-namespace \
+  --set global.logAsJson=true \
+  --set global.prometheus.enabled=true
+
+# Apply components
+kubectl apply -f helm/phase5/components/
+```
+
+---
+
+## Component Testing
+
+**Test Script**: `scripts/test-dapr-components.sh`
+
+```bash
+#!/bin/bash
+
+# Test Pub/Sub
+dapr publish --publish-app-id chat-api --pubsub pubsub-kafka --topic task-events --data '{"test": "message"}'
+
+# Test State Store
+dapr invoke --app-id websocket-sync-service --method state/test --verb POST --data '{"key": "test", "value": "data"}'
+
+# Test Secret Store
+dapr invoke --app-id chat-api --method secrets/test --verb GET
+
+# Test Cron Bindings (check logs)
+kubectl logs -n phase5 -l app=recurring-task-service -c daprd --tail=50
+
+# Test Service Invocation
+dapr invoke --app-id chat-api --method health --verb GET
+```
+
+---
+
+## Summary
+
+This Dapr component configuration supports all Phase V functional requirements:
+
+- ✅ **FR-019**: Pub/Sub abstraction (Kafka)
+- ✅ **FR-020**: State management (PostgreSQL)
+- ✅ **FR-021**: Secrets management (Kubernetes Secrets)
+- ✅ **FR-022**: Cron bindings (recurring tasks + reminders)
+- ✅ **FR-023**: Service invocation (optional, event-driven preferred)
+- ✅ **FR-024**: Distributed tracing (Zipkin + OpenTelemetry)
+- ✅ **FR-025**: Resiliency policies (retries + circuit breakers)
+
+**Next Steps**: Create quickstart guide (`quickstart.md`) with 5-minute local setup.
