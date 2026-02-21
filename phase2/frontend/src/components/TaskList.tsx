@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/utils/api-client";
-import type { Task, ItemResponse } from "@/utils/types";
+import type { Task, ItemResponse, ListResponse } from "@/utils/types";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { TaskEditModal } from "./TaskEditModal";
 
@@ -52,7 +52,7 @@ export function TaskList({
       setLoading(true);
       setError(null);
 
-      const response = await api.get<{ data: Task[] }>(
+      const response = await api.get<ListResponse<Task>>(
         `/api/users/${userId}/tasks`
       );
 
