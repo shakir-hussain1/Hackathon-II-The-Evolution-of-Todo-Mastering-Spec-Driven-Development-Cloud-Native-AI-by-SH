@@ -96,11 +96,12 @@ export async function apiCall<T = unknown>(
       // If response is not JSON, use default error
     }
 
-    const error: any = new Error(errorData.message || response.statusText);
+    const error: any = new Error(errorData.message || errorData.detail || response.statusText);
     error.status = response.status;
     error.success = false;
     error.error = errorData.error;
-    error.message = errorData.message;
+    error.message = errorData.message || errorData.detail;
+    error.detail = errorData.detail;
 
     throw error;
   } catch (error: any) {
