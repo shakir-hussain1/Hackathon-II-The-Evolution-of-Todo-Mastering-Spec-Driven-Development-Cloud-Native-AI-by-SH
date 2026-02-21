@@ -7,7 +7,7 @@
 
 import { getToken } from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://shakirhussain1-phase2-backend.hf.space";
 
 /**
  * Response format from API.
