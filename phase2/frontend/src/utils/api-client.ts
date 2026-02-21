@@ -47,7 +47,7 @@ export interface ApiError {
 export async function apiCall<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<ApiResponse<T>> {
+): Promise<T> {
   // Get JWT token
   const token = await getToken();
 
@@ -76,7 +76,7 @@ export async function apiCall<T = unknown>(
     if (response.ok) {
       // 204 No Content - no response body
       if (response.status === 204) {
-        return { success: true };
+        return { success: true } as unknown as T;
       }
 
       const data = await response.json();
@@ -131,9 +131,9 @@ export const api = {
    * GET request
    *
    * @param endpoint - API endpoint path
-   * @returns Promise<ApiResponse<T>>
+   * @returns Promise<T>
    */
-  get: <T = unknown>(endpoint: string): Promise<ApiResponse<T>> =>
+  get: <T = unknown>(endpoint: string): Promise<T> =>
     apiCall<T>(endpoint, { method: "GET" }),
 
   /**
@@ -141,12 +141,12 @@ export const api = {
    *
    * @param endpoint - API endpoint path
    * @param body - Request body (will be JSON stringified)
-   * @returns Promise<ApiResponse<T>>
+   * @returns Promise<T>
    */
   post: <T = unknown>(
     endpoint: string,
     body: unknown
-  ): Promise<ApiResponse<T>> =>
+  ): Promise<T> =>
     apiCall<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
@@ -157,12 +157,12 @@ export const api = {
    *
    * @param endpoint - API endpoint path
    * @param body - Request body (will be JSON stringified)
-   * @returns Promise<ApiResponse<T>>
+   * @returns Promise<T>
    */
   put: <T = unknown>(
     endpoint: string,
     body: unknown
-  ): Promise<ApiResponse<T>> =>
+  ): Promise<T> =>
     apiCall<T>(endpoint, {
       method: "PUT",
       body: JSON.stringify(body),
@@ -173,23 +173,23 @@ export const api = {
    *
    * @param endpoint - API endpoint path
    * @param body - Request body (will be JSON stringified)
-   * @returns Promise<ApiResponse<T>>
+   * @returns Promise<T>
    */
   patch: <T = unknown>(
     endpoint: string,
     body?: unknown
-  ): Promise<ApiResponse<T>> =>
+  ): Promise<T> =>
     apiCall<T>(endpoint, {
       method: "PATCH",
-      ...(body && { body: JSON.stringify(body) }),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     }),
 
   /**
    * DELETE request
    *
    * @param endpoint - API endpoint path
-   * @returns Promise<ApiResponse<T>>
+   * @returns Promise<T>
    */
-  delete: <T = unknown>(endpoint: string): Promise<ApiResponse<T>> =>
+  delete: <T = unknown>(endpoint: string): Promise<T> =>
     apiCall<T>(endpoint, { method: "DELETE" }),
 };

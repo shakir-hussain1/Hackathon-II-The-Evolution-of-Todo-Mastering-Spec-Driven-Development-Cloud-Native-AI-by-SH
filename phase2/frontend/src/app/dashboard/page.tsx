@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { api } from "@/utils/api-client";
 import { clearToken, getUserIdFromToken } from "@/utils/auth";
-import type { Task } from "@/utils/types";
+import type { Task, ListResponse, ItemResponse } from "@/utils/types";
 
 function UnifiedDashboard() {
   const router = useRouter();
@@ -56,7 +56,7 @@ function UnifiedDashboard() {
   const fetchTasks = async (uid: string) => {
     try {
       setLoading(true);
-      const response = await api.get<{ data: Task[] }>(`/api/users/${uid}/tasks`);
+      const response = await api.get<ListResponse<Task>>(`/api/users/${uid}/tasks`);
       setTasks(response.data || []);
     } catch (err: any) {
       setError("Failed to load tasks");
@@ -73,7 +73,7 @@ function UnifiedDashboard() {
       setCreating(true);
       setError(null);
 
-      const response = await api.post(`/api/users/${userId}/tasks`, {
+      const response = await api.post<ItemResponse<Task>>(`/api/users/${userId}/tasks`, {
         title: newTitle.trim(),
         description: newDescription.trim() || null,
       });
@@ -100,7 +100,7 @@ function UnifiedDashboard() {
     if (!userId || !editTitle.trim()) return;
 
     try {
-      const response = await api.put(`/api/users/${userId}/tasks/${taskId}`, {
+      const response = await api.put<ItemResponse<Task>>(`/api/users/${userId}/tasks/${taskId}`, {
         title: editTitle.trim(),
         description: editDescription.trim() || null,
       });
@@ -124,7 +124,7 @@ function UnifiedDashboard() {
     if (!userId) return;
 
     try {
-      const response = await api.patch(`/api/users/${userId}/tasks/${task.id}/complete`);
+      const response = await api.patch<ItemResponse<Task>>(`/api/users/${userId}/tasks/${task.id}/complete`);
       setTasks(tasks.map((t) => (t.id === task.id ? response.data : t)));
     } catch (err: any) {
       setError(err.message || "Failed to toggle task");
