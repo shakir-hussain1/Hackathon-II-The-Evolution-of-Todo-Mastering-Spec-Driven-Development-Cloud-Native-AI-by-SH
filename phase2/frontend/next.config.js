@@ -5,7 +5,7 @@ const nextConfig = {
     turbo: false, // Disable Turbopack to prevent memory issues
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://shakirhussain1-phase2-backend.hf.space",
   },
 };
 
